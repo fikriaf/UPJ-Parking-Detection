@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 1
+names: ['motor']
+
+roboflow:
+  workspace: fikri-uuphx
+  project: dataset-parkiran-upj-ljoum
+  version: 3
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/fikri-uuphx/dataset-parkiran-upj-ljoum/dataset/3

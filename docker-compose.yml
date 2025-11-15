@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  # Frontend Service
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: parkit-frontend
+    ports:
+      - "3000:80"
+    environment:
+      - BACKEND_API_URL=http://localhost:8000
+    networks:
+      - parkit-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+  # Backend Service (if needed)
+  # backend:
+  #   build:
+  #     context: ./backend
+  #     dockerfile: Dockerfile
+  #   container_name: parkit-backend
+  #   ports:
+  #     - "8000:8000"
+  #   environment:
+  #     - MONGODB_URL=mongodb://mongodb:27017
+  #     - DATABASE_NAME=parkit
+  #   depends_on:
+  #     - mongodb
+  #   networks:
+  #     - parkit-network
+  #   restart: unless-stopped
+  #   volumes:
+  #     - ./backend/uploads:/app/uploads
+  #     - ./backend/models:/app/models
+
+  # MongoDB Service (if needed)
+  # mongodb:
+  #   image: mongo:latest
+  #   container_name: parkit-mongodb
+  #   ports:
+  #     - "27017:27017"
+  #   environment:
+  #     - MONGO_INITDB_DATABASE=parkit
+  #   networks:
+  #     - parkit-network
+  #   restart: unless-stopped
+  #   volumes:
+  #     - mongodb_data:/data/db
+
+networks:
+  parkit-network:
+    driver: bridge
+
+# volumes:
+#   mongodb_data:
