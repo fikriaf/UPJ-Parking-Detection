@@ -1,0 +1,123 @@
+flowchart TD
+    Start([User Opens]) --> LoadApp[Load App]
+    LoadApp --> InitRouter[Init Router]
+    InitRouter --> ShowHome[Home Page]
+    
+    ShowHome --> UserAction{Action}
+    
+    %% Upload Page Flow
+    UserAction -->|Upload| UploadPage[Upload Page]
+    UploadPage --> CameraOption{Option}
+    
+    %% Camera Stream Option
+    CameraOption -->|Camera| EnterURL[Enter URL]
+    EnterURL --> ConnectCam[Connect]
+    ConnectCam --> ValidateURL{Valid?}
+    ValidateURL -->|No| ShowError1[Error]
+    ValidateURL -->|Yes| LoadStream[Load Stream]
+    LoadStream --> ShowPreview[Preview 90°]
+    ShowPreview --> UserCamAction{Action}
+    
+    UserCamAction -->|Hover| ShowCoords[Show XY]
+    UserCamAction -->|Click| DrawMarker[Draw Marker]
+    UserCamAction -->|Capture| CaptureFrame[Capture]
+    
+    CaptureFrame --> RotateImage[Rotate 90°]
+    RotateImage --> AddToList[Add to List]
+    AddToList --> UserCamAction
+    
+    %% Manual Upload Option
+    CameraOption -->|Manual| SelectFiles[Select Files]
+    SelectFiles --> BrowseFiles[Browse]
+    BrowseFiles --> ValidateFiles{Valid?}
+    ValidateFiles -->|No| ShowError2[Error]
+    ValidateFiles -->|Yes| ShowPreviews[Previews]
+    
+    %% Session Configuration
+    ShowPreviews --> EnterSession[Session ID]
+    AddToList --> EnterSession
+    EnterSession --> EnterCamera[Camera ID]
+    EnterCamera --> ClickUpload[Upload]
+    
+    %% Upload Process
+    ClickUpload --> UploadLoop{Each File}
+    UploadLoop --> SendFrame[POST /upload]
+    SendFrame --> ShowProgress[Progress]
+    ShowProgress --> CheckResponse{Success?}
+    CheckResponse -->|No| ShowError3[Error]
+    CheckResponse -->|Yes| NextFile{More?}
+    NextFile -->|Yes| UploadLoop
+    NextFile -->|No| AllUploaded[Uploaded]
+    
+    AllUploaded --> ShowComplete[Complete Btn]
+    ShowComplete --> ClickComplete[Complete]
+    ClickComplete --> SendComplete[POST /complete]
+    SendComplete --> ShowLoading[Loading]
+    ShowLoading --> WaitProcess[Wait]
+    WaitProcess --> ProcessDone{Success?}
+    ProcessDone -->|No| ShowError4[Error]
+    ProcessDone -->|Yes| RedirectResults[To Results]
+    
+    %% Results Page Flow
+    UserAction -->|Results| ResultsPage[Results]
+    RedirectResults --> ResultsPage
+    ResultsPage --> FetchLive[GET /live]
+    FetchLive --> CheckLive{Data?}
+    CheckLive -->|No| ShowNoData[No Data]
+    CheckLive -->|Yes| DisplayResults[Display]
+    
+    DisplayResults --> ShowImage[Image]
+    ShowImage --> ShowStats[Stats]
+    ShowStats --> ShowDetails[Details]
+    
+    ShowDetails --> ResultAction{Action}
+    ResultAction -->|History| FetchLatest[GET /latest]
+    ResultAction -->|Select| FetchSession[GET /:id]
+    ResultAction -->|Refresh| FetchLive
+    
+    FetchLatest --> ShowList[List]
+    ShowList --> ResultAction
+    
+    FetchSession --> DisplayResults
+    
+    %% Calibration Page Flow
+    UserAction -->|Calibration| CalibPage[Calib Page]
+    CalibPage --> FetchCalib[GET /calib]
+    FetchCalib --> CheckCalib{Exists?}
+    CheckCalib -->|No| ShowCalibForm[Form]
+    CheckCalib -->|Yes| ShowCalibData[Data]
+    
+    ShowCalibForm --> UploadCalibImage[Upload Image]
+    UploadCalibImage --> ShowCalibPreview[Preview]
+    ShowCalibPreview --> ClickRows[Mark Rows]
+    ClickRows --> DrawRowLines[Draw Lines]
+    DrawRowLines --> EnterRowData[Row Data]
+    EnterRowData --> SaveCalib[POST /calib]
+    SaveCalib --> CalibSuccess{Success?}
+    CalibSuccess -->|No| ShowError5[Error]
+    CalibSuccess -->|Yes| ShowCalibData
+    
+    ShowCalibData --> CalibAction{Action}
+    CalibAction -->|Edit| ShowCalibForm
+    CalibAction -->|Delete| DeleteCalib[DELETE /calib]
+    CalibAction -->|Back| UserAction
+    
+    DeleteCalib --> CalibPage
+    
+    %% Error Handling
+    ShowError1 --> UserAction
+    ShowError2 --> UserAction
+    ShowError3 --> UserAction
+    ShowError4 --> UserAction
+    ShowError5 --> UserAction
+    ShowNoData --> UserAction
+    
+    style Start fill:#90EE90
+    style ShowHome fill:#87CEEB
+    style DisplayResults fill:#98FB98
+    style ShowError1 fill:#FFB6C1
+    style ShowError2 fill:#FFB6C1
+    style ShowError3 fill:#FFB6C1
+    style ShowError4 fill:#FFB6C1
+    style ShowError5 fill:#FFB6C1
+    style RedirectResults fill:#FFD700

@@ -1,0 +1,87 @@
+flowchart TB
+    subgraph User["👤 User"]
+        Browser[Web Browser]
+        Camera[DroidCam/IP Camera]
+    end
+    
+    subgraph Frontend["🖥️ Frontend SPA"]
+        Router[Router]
+        UploadUI[Upload Page]
+        ResultsUI[Results Page]
+        CalibUI[Calibration Page]
+        APIClient[API Client]
+    end
+    
+    subgraph Backend["⚙️ Backend API"]
+        FastAPI[FastAPI Server]
+        UploadEndpoint[Upload Endpoint]
+        CompleteEndpoint[Complete Endpoint]
+        ResultsEndpoint[Results Endpoint]
+        CalibEndpoint[Calibration Endpoint]
+    end
+    
+    subgraph Processing["🔬 Processing Engine"]
+        YOLO[YOLO Detection Model]
+        CalibEngine[Calibration Engine]
+        ImageProc[Image Processing]
+    end
+    
+    subgraph Storage["💾 Storage"]
+        FrameStore[(Frame Storage)]
+        ResultStore[(Result Storage)]
+        CalibStore[(Calibration Data)]
+        SessionDB[(Session Database)]
+    end
+    
+    %% User Interactions
+    Browser -->|Navigate| Router
+    Camera -->|Stream| UploadUI
+    
+    %% Frontend Internal
+    Router -->|Route| UploadUI
+    Router -->|Route| ResultsUI
+    Router -->|Route| CalibUI
+    
+    UploadUI -->|API Call| APIClient
+    ResultsUI -->|API Call| APIClient
+    CalibUI -->|API Call| APIClient
+    
+    %% Frontend to Backend
+    APIClient -->|POST /upload| UploadEndpoint
+    APIClient -->|POST /complete| CompleteEndpoint
+    APIClient -->|GET /results/*| ResultsEndpoint
+    APIClient -->|POST /calibration| CalibEndpoint
+    
+    %% Backend Processing
+    UploadEndpoint -->|Save| FrameStore
+    UploadEndpoint -->|Update| SessionDB
+    
+    CompleteEndpoint -->|Load Frames| FrameStore
+    CompleteEndpoint -->|Detect| YOLO
+    CompleteEndpoint -->|Load Calibration| CalibStore
+    
+    YOLO -->|Detections| CalibEngine
+    CalibEngine -->|Calculate Spaces| ImageProc
+    ImageProc -->|Annotate| ResultStore
+    
+    CompleteEndpoint -->|Update| SessionDB
+    
+    ResultsEndpoint -->|Query| SessionDB
+    ResultsEndpoint -->|Load| ResultStore
+    
+    CalibEndpoint -->|Save/Load| CalibStore
+    
+    %% Response Flow
+    ResultsEndpoint -->|JSON Response| APIClient
+    CompleteEndpoint -->|JSON Response| APIClient
+    UploadEndpoint -->|JSON Response| APIClient
+    CalibEndpoint -->|JSON Response| APIClient
+    
+    APIClient -->|Update UI| ResultsUI
+    APIClient -->|Update UI| UploadUI
+    APIClient -->|Update UI| CalibUI
+    
+    style Browser fill:#87CEEB
+    style FastAPI fill:#98FB98
+    style YOLO fill:#FFD700
+    style SessionDB fill:#DDA0DD

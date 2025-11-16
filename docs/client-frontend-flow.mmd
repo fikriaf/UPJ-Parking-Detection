@@ -1,0 +1,49 @@
+flowchart TD
+    Start([User Opens]) --> LoadApp[Load App]
+    LoadApp --> ShowHome[Home]
+    
+    ShowHome --> AutoFetch[Auto Fetch]
+    AutoFetch --> FetchLive[GET /live]
+    
+    FetchLive --> CheckData{Data?}
+    CheckData -->|No| ShowEmpty[Empty]
+    CheckData -->|Yes| DisplayResults[Display]
+    
+    ShowEmpty --> WaitRefresh[Wait]
+    WaitRefresh --> AutoFetch
+    
+    DisplayResults --> ShowImage[Image]
+    ShowImage --> ShowStats[Stats]
+    ShowStats --> ShowDetails[Details]
+    
+    ShowDetails --> ShowMotorcycles[Motorcycles]
+    ShowMotorcycles --> ShowSpaces[Spaces]
+    ShowSpaces --> ShowOccupancy[Occupancy %]
+    ShowOccupancy --> ShowPerRow[Per Row]
+    
+    ShowPerRow --> UserAction{Action}
+    
+    UserAction -->|Refresh| AutoFetch
+    UserAction -->|History| HistoryPage[History]
+    UserAction -->|Auto| WaitTimer[Wait 5-10s]
+    
+    WaitTimer --> AutoFetch
+    
+    HistoryPage --> FetchLatest[GET /latest]
+    FetchLatest --> ShowList[List]
+    ShowList --> ListAction{Action}
+    
+    ListAction -->|Select| SelectSession[Select]
+    ListAction -->|Back| ShowHome
+    ListAction -->|More| Pagination[Next]
+    
+    Pagination --> FetchLatest
+    
+    SelectSession --> FetchSession[GET /:id]
+    FetchSession --> DisplayResults
+    
+    style Start fill:#90EE90
+    style DisplayResults fill:#98FB98
+    style ShowEmpty fill:#FFE4B5
+    style ShowStats fill:#87CEEB
+    style ShowOccupancy fill:#FFD700
