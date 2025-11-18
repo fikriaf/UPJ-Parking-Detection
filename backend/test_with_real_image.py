@@ -11,7 +11,7 @@ import sys
 
 # Configuration
 BASE_URL = "http://localhost:8000"
-API_KEY = "parkit-admin-secret-key-change-this"
+API_KEY = "parkit-admin-best-UHUYYYYY"
 HEADERS = {"X-API-Key": API_KEY}
 
 # Real image path
@@ -78,7 +78,7 @@ def test_create_calibration():
                 "end_x": 5700
             }
         ],
-        "min_space_width": 150.0,  # Lebar space di ROW 0 (paling bawah)
+        "min_space_width": 100.0,  # Lebar space di ROW 0 (paling bawah)
         "space_coefficient": 0.85,  # Row ke atas akan lebih kecil
         "row_start_x": 40,  # Global fallback (jika per-row tidak diset)
         "row_end_x": 6100
