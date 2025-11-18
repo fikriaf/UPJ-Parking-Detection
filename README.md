@@ -42,11 +42,99 @@ Parkit is an intelligent parking detection system that uses YOLOv8 deep learning
                                           └─────────────┘
 ```
 
-### Flow Diagrams
+### System Architecture Diagram
 
-- [Backend Processing Flow](docs/backend-flow.mmd)
-- [Frontend Admin Flow](docs/frontend-flow.mmd)
-- [Client Interface Flow](docs/client-frontend-flow.mmd)
+```mermaid
+flowchart TB
+    subgraph User["User"]
+        Browser[Web Browser]
+        Camera[DroidCam/IP Camera]
+    end
+    
+    subgraph Frontend["Frontend SPA"]
+        Router[Router]
+        UploadUI[Upload Page]
+        ResultsUI[Results Page]
+        CalibUI[Calibration Page]
+        APIClient[API Client]
+    end
+    
+    subgraph Backend["Backend API"]
+        FastAPI[FastAPI Server]
+        UploadEndpoint[Upload Endpoint]
+        CompleteEndpoint[Complete Endpoint]
+        ResultsEndpoint[Results Endpoint]
+        CalibEndpoint[Calibration Endpoint]
+    end
+    
+    subgraph Processing["Processing Engine"]
+        YOLO[YOLO Detection Model]
+        CalibEngine[Calibration Engine]
+        ImageProc[Image Processing]
+    end
+    
+    subgraph Storage["Storage"]
+        FrameStore[(Frame Storage)]
+        ResultStore[(Result Storage)]
+        CalibStore[(Calibration Data)]
+        SessionDB[(Session Database)]
+    end
+    
+    Browser -->|Navigate| Router
+    Camera -->|Stream| UploadUI
+    
+    Router -->|Route| UploadUI
+    Router -->|Route| ResultsUI
+    Router -->|Route| CalibUI
+    
+    UploadUI -->|API Call| APIClient
+    ResultsUI -->|API Call| APIClient
+    CalibUI -->|API Call| APIClient
+    
+    APIClient -->|POST /upload| UploadEndpoint
+    APIClient -->|POST /complete| CompleteEndpoint
+    APIClient -->|GET /results/*| ResultsEndpoint
+    APIClient -->|POST /calibration| CalibEndpoint
+    
+    UploadEndpoint -->|Save| FrameStore
+    UploadEndpoint -->|Update| SessionDB
+    
+    CompleteEndpoint -->|Load Frames| FrameStore
+    CompleteEndpoint -->|Detect| YOLO
+    CompleteEndpoint -->|Load Calibration| CalibStore
+    
+    YOLO -->|Detections| CalibEngine
+    CalibEngine -->|Calculate Spaces| ImageProc
+    ImageProc -->|Annotate| ResultStore
+    
+    CompleteEndpoint -->|Update| SessionDB
+    
+    ResultsEndpoint -->|Query| SessionDB
+    ResultsEndpoint -->|Load| ResultStore
+    
+    CalibEndpoint -->|Save/Load| CalibStore
+    
+    ResultsEndpoint -->|JSON Response| APIClient
+    CompleteEndpoint -->|JSON Response| APIClient
+    UploadEndpoint -->|JSON Response| APIClient
+    CalibEndpoint -->|JSON Response| APIClient
+    
+    APIClient -->|Update UI| ResultsUI
+    APIClient -->|Update UI| UploadUI
+    APIClient -->|Update UI| CalibUI
+```
+
+### Additional Flow Diagrams
+
+For detailed flow diagrams, see:
+- [Backend Processing Flow](docs/BACKEND_FLOW.md)
+- [Frontend Flow Documentation](docs/FRONTEND_FLOW.md)
+- [System Communication Flow](docs/SYSTEM_COMMUNICATION_FLOW.md)
+
+Raw Mermaid files:
+- [Backend Flow](docs/backend-flow.mmd)
+- [Frontend Flow](docs/frontend-flow.mmd)
+- [Client Flow](docs/client-frontend-flow.mmd)
 - [System Architecture](docs/system-architecture.mmd)
 - [User Journey](docs/user-journey.mmd)
 
