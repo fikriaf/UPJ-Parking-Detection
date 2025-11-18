@@ -8,6 +8,18 @@
 
 Parkit is an intelligent parking detection system that uses YOLOv8 deep learning model to detect motorcycles and calculate available parking spaces in real-time. The system provides both admin dashboard for management and public client interface for viewing parking availability.
 
+## Screenshots
+
+### Detection Result Example
+
+![Detection Result](docs/Draft%20Result.jpg)
+
+The system provides annotated images showing:
+- Red bounding boxes around detected motorcycles
+- Green rectangles for empty parking spaces
+- Blue lines indicating parking row positions
+- Labels showing available spaces
+
 ## Features
 
 - **Real-time Detection**: Motorcycle detection using YOLOv8
