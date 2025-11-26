@@ -1,0 +1,73 @@
+@startuml Parkit Data Flow
+
+!theme vibrant
+skinparam defaultFontName Arial
+skinparam backgroundColor #FAFAFA
+
+title Parkit - Detection Data Flow
+
+actor "Admin" as admin
+participant "Admin UI\n:3000" as ui
+participant "Backend API\n:8000" as api
+participant "YOLO Engine" as yolo
+participant "Calibration\nEngine" as calib
+database "MongoDB\nAtlas" as db
+database "File\nStorage" as files
+
+== 1. Upload Frames ==
+admin -> ui : Select images
+ui -> api : POST /upload\n(multipart/form-data)
+api -> files : Save frames
+api -> db : Create session
+api --> ui : session_id
+ui --> admin : Upload success
+
+== 2. Complete Session ==
+admin -> ui : Click "Complete"
+ui -> api : POST /complete/{session_id}
+api -> files : Load frames
+api -> yolo : Detect motorcycles
+yolo --> api : Detections\n(bboxes, confidence)
+
+api -> db : Get calibration data
+db --> api : Parking rows config
+
+api -> calib : Calculate empty spaces\n(detections + calibration)
+calib --> api : Empty spaces list
+
+api -> files : Save annotated image
+api -> db : Store results
+api --> ui : Detection complete
+ui --> admin : Show results
+
+== 3. View Results ==
+admin -> ui : Navigate to Results
+ui -> api : GET /api/results/live
+api -> db : Query latest session
+db --> api : Session data
+api --> ui : JSON response
+ui --> admin : Display results\n+ annotated image
+
+== 4. Public View ==
+actor "Public User" as public
+participant "Client UI\n:8080" as client
+
+public -> client : Open page
+client -> api : GET /api/results/live
+api -> db : Query active session
+db --> api : Latest data
+api --> client : JSON response
+client --> public : Show parking status
+
+note over api, yolo
+  **Detection Process:**
+  1. Load frame images
+  2. Run YOLO inference
+  3. Filter by confidence
+  4. Assign to parking rows
+  5. Calculate empty spaces
+  6. Annotate image
+  7. Store results
+end note
+
+@enduml

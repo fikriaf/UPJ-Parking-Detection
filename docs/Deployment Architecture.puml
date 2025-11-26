@@ -1,0 +1,125 @@
+@startuml Parkit Deployment Architecture
+
+!define RECTANGLE class
+!define ICONURL https://raw.githubusercontent.com/tupadr3/plantuml-icon-font-sprites/master
+
+skinparam backgroundColor #FEFEFE
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+
+' Color scheme
+skinparam rectangle {
+    BackgroundColor<<pc>> #E3F2FD
+    BorderColor<<pc>> #1976D2
+    BackgroundColor<<service>> #FFF3E0
+    BorderColor<<service>> #F57C00
+    BackgroundColor<<cloud>> #E8F5E9
+    BorderColor<<cloud>> #388E3C
+    BackgroundColor<<tunnel>> #F3E5F5
+    BorderColor<<tunnel>> #7B1FA2
+    BackgroundColor<<storage>> #FFF9C4
+    BorderColor<<storage>> #F9A825
+}
+
+' Main container - PC B506
+rectangle "**PC Lokal - Ruang B506**\n//Windows 11 + Docker WSL2//" <<pc>> {
+    
+    ' Docker containers
+    rectangle "**Docker Containers**" as docker {
+        
+        rectangle "**Backend API**\n//FastAPI + Uvicorn//\n:8000" <<service>> as backend {
+            component "REST API" as api
+            component "YOLO Detection" as yolo
+            component "Calibration Engine" as calib
+        }
+        
+        rectangle "**Admin Dashboard**\n//Nginx + SPA//\n:3000" <<service>> as admin {
+            component "Upload Frames" as upload
+            component "Calibration UI" as calibui
+            component "Results Monitor" as monitor
+        }
+        
+        rectangle "**Client Frontend**\n//Static HTML//\n:8080" <<service>> as client {
+            component "Live View" as live
+            component "Public Display" as display
+        }
+    }
+    
+    ' Local storage
+    rectangle "**Local Storage**" <<storage>> as storage {
+        database "uploads/" as uploads
+        database "results/" as results
+        database "calibration/" as calibdata
+        database "models/\nbest.pt" as model
+    }
+}
+
+' Cloud services
+cloud "**MongoDB Atlas**\n//Cloud Database//" <<cloud>> as mongodb {
+    database "parkit_db" as db {
+        collections "sessions"
+        collections "frames"
+        collections "detections"
+    }
+}
+
+' Ngrok tunnel
+rectangle "**Ngrok Tunnels**\n//HTTPS Proxy//" <<tunnel>> as ngrok {
+    component "Backend Tunnel\nhttps://xxx.ngrok-free.app" as ngrok_backend
+    component "Admin Tunnel\nhttps://yyy.ngrok-free.app" as ngrok_admin
+    component "Client Tunnel\nhttps://zzz.ngrok-free.app" as ngrok_client
+}
+
+' External access
+actor "Admin User" as admin_user
+actor "Public User" as public_user
+cloud "Internet" as internet
+
+' Connections
+backend --> mongodb : "Store/Retrieve\nData"
+backend --> storage : "Read/Write\nFiles"
+yolo --> model : "Load Model"
+api --> yolo : "Detect"
+api --> calib : "Calculate\nSpaces"
+
+admin --> backend : "HTTP API\nCalls"
+client --> backend : "HTTP API\nCalls"
+
+backend --> ngrok_backend : "Expose :8000"
+admin --> ngrok_admin : "Expose :3000"
+client --> ngrok_client : "Expose :8080"
+
+ngrok --> internet : "Public\nAccess"
+
+admin_user --> internet : "Access via\nBrowser"
+public_user --> internet : "Access via\nBrowser"
+
+internet --> ngrok_admin : "Admin\nDashboard"
+internet --> ngrok_client : "Public\nView"
+internet --> ngrok_backend : "API\nRequests"
+
+note right of backend
+  **Tech Stack:**
+  • Python 3.10
+  • FastAPI
+  • YOLOv12 (Ultralytics)
+  • OpenCV
+  • Motor (MongoDB)
+end note
+
+note right of mongodb
+  **Free Tier M0**
+  • 512 MB Storage
+  • Shared RAM
+  • Singapore Region
+end note
+
+note right of ngrok
+  **Free Tier**
+  • 1 online ngrok process
+  • 40 connections/minute
+  • Random URLs
+end note
+
+@enduml

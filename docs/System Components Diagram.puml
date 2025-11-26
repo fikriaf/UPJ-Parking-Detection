@@ -1,0 +1,99 @@
+@startuml Parkit System Components
+
+!theme cerulean-outline
+skinparam componentStyle rectangle
+skinparam defaultFontName Arial
+
+' Frontend Layer
+package "**Frontend Layer**" {
+    [Admin Dashboard\nPort 3000] as AdminUI
+    [Client Frontend\nPort 8080] as ClientUI
+}
+
+' API Layer
+package "**API Layer**" {
+    [FastAPI Backend\nPort 8000] as API
+    
+    package "Routers" {
+        [Upload Router] as UploadRouter
+        [Results Router] as ResultsRouter
+        [Calibration Router] as CalibRouter
+    }
+}
+
+' Service Layer
+package "**Service Layer**" {
+    [Detection Service] as DetectionSvc
+    [Calibration Service] as CalibSvc
+    [Session Service] as SessionSvc
+}
+
+' Core Engine
+package "**Processing Engine**" {
+    [YOLOv12 Model] as YOLO
+    [Image Processor] as ImgProc
+    [Space Calculator] as SpaceCalc
+}
+
+' Data Layer
+package "**Data Layer**" {
+    database "MongoDB Atlas" as MongoDB
+    folder "File Storage" as FileStorage {
+        [uploads/] as Uploads
+        [results/] as Results
+        [calibration/] as CalibData
+        [models/] as Models
+    }
+}
+
+' External
+cloud "Ngrok Tunnels" as Ngrok
+actor "Users" as Users
+
+' Connections
+Users --> Ngrok : HTTPS
+Ngrok --> AdminUI : Tunnel
+Ngrok --> ClientUI : Tunnel
+Ngrok --> API : Tunnel
+
+AdminUI --> API : REST API
+ClientUI --> API : REST API
+
+API --> UploadRouter
+API --> ResultsRouter
+API --> CalibRouter
+
+UploadRouter --> SessionSvc
+ResultsRouter --> DetectionSvc
+CalibRouter --> CalibSvc
+
+DetectionSvc --> YOLO : Detect Objects
+DetectionSvc --> ImgProc : Process Images
+CalibSvc --> SpaceCalc : Calculate Spaces
+
+SessionSvc --> MongoDB : Store Sessions
+DetectionSvc --> MongoDB : Store Results
+CalibSvc --> MongoDB : Store Config
+
+DetectionSvc --> FileStorage : Save Images
+YOLO --> Models : Load Model
+ImgProc --> Uploads : Read Frames
+ImgProc --> Results : Write Results
+CalibSvc --> CalibData : Read/Write
+
+note right of YOLO
+  **YOLOv12 Detection**
+  • Confidence: 0.25
+  • IOU: 0.45
+  • Max Detections: 300
+end note
+
+note right of MongoDB
+  **Collections:**
+  • sessions
+  • frames
+  • detections
+  • calibrations
+end note
+
+@enduml
