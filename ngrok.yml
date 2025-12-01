@@ -1,0 +1,18 @@
+version: "2"
+authtoken: <your-authtoken>
+
+tunnels:
+  backend:
+    proto: http
+    addr: 8000
+    inspect: true
+  
+  admin:
+    proto: http
+    addr: 3000
+    inspect: true
+  
+  client:
+    proto: http
+    addr: 8080
+    inspect: true

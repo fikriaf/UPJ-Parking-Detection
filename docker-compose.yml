@@ -1,12 +1,37 @@
 version: '3.8'
 
 services:
-  # Frontend Service
-  frontend:
+  # Backend Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: parkit-backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env
+    networks:
+      - parkit-network
+    restart: unless-stopped
+    volumes:
+      - ./backend/uploads:/app/uploads
+      - ./backend/results:/app/results
+      - ./backend/calibration:/app/calibration
+      - ./backend/models:/app/models
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Admin Frontend Service
+  admin-frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: parkit-frontend
+    container_name: parkit-admin-frontend
     ports:
       - "3000:80"
     environment:
@@ -14,6 +39,8 @@ services:
     networks:
       - parkit-network
     restart: unless-stopped
+    depends_on:
+      - backend
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
       interval: 30s
@@ -21,43 +48,6 @@ services:
       retries: 3
       start_period: 5s
 
-  # Backend Service (if needed)
-  # backend:
-  #   build:
-  #     context: ./backend
-  #     dockerfile: Dockerfile
-  #   container_name: parkit-backend
-  #   ports:
-  #     - "8000:8000"
-  #   environment:
-  #     - MONGODB_URL=mongodb://mongodb:27017
-  #     - DATABASE_NAME=parkit
-  #   depends_on:
-  #     - mongodb
-  #   networks:
-  #     - parkit-network
-  #   restart: unless-stopped
-  #   volumes:
-  #     - ./backend/uploads:/app/uploads
-  #     - ./backend/models:/app/models
-
-  # MongoDB Service (if needed)
-  # mongodb:
-  #   image: mongo:latest
-  #   container_name: parkit-mongodb
-  #   ports:
-  #     - "27017:27017"
-  #   environment:
-  #     - MONGO_INITDB_DATABASE=parkit
-  #   networks:
-  #     - parkit-network
-  #   restart: unless-stopped
-  #   volumes:
-  #     - mongodb_data:/data/db
-
 networks:
   parkit-network:
     driver: bridge
-
-# volumes:
-#   mongodb_data:

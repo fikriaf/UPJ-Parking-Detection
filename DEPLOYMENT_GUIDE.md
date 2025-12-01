@@ -465,11 +465,11 @@ ngrok http 8080 --domain=parkit-client.ngrok.app
 
 ### 7. Ngrok Configuration File (Recommended)
 
-Buat file `~/ngrok.yml`:
+Buat file `ngrok.yml` di root project:
 
 ```yaml
 version: "2"
-authtoken: <your-authtoken>
+authtoken: YOUR_ACTUAL_TOKEN_HERE
 
 tunnels:
   backend:
@@ -488,11 +488,78 @@ tunnels:
     inspect: true
 ```
 
-Start semua tunnels:
+**PENTING**: 
+- Ganti `YOUR_ACTUAL_TOKEN_HERE` dengan authtoken asli dari ngrok dashboard
+- Gunakan 2 spaces untuk indentasi (YAML sensitive!)
+- Pastikan tidak ada tab character
+
+### 8. Start Ngrok dengan Config File
+
+**⚠️ PENTING: Start services SEBELUM start ngrok!**
 
 ```bash
-ngrok start --all --config ~/ngrok.yml
+# Step 1: Pastikan semua service berjalan
+# Backend
+curl http://localhost:8000/health
+
+# Admin
+curl -I http://localhost:3000
+
+# Client
+curl -I http://localhost:8080
+
+# Step 2: Jika semua OK, start ngrok
+ngrok start --all --config ngrok.yml
 ```
+
+### 9. Troubleshooting Ngrok Error 8012
+
+**Error**: "Failed to connect to localhost:8000/3000/8080"
+
+**Penyebab**: Service belum berjalan di port tersebut
+
+**Solusi**:
+
+```bash
+# Check port yang sedang digunakan
+# Windows PowerShell:
+Get-NetTCPConnection -LocalPort 8000,3000,8080
+
+# WSL/Linux:
+sudo lsof -i :8000
+sudo lsof -i :3000
+sudo lsof -i :8080
+
+# Jika tidak ada output, service belum berjalan!
+```
+
+**Urutan Start yang Benar**:
+
+```bash
+# 1. Start Backend
+cd ~/parkit/backend
+docker-compose up -d
+# Tunggu sampai ready (check logs)
+docker logs -f parkit-backend
+
+# 2. Start Admin Frontend
+cd ~/parkit/frontend
+python3 -m http.server 3000 &
+
+# 3. Start Client Frontend
+cd ~/parkit/client
+python3 -m http.server 8080 &
+
+# 4. Verify semua service
+curl http://localhost:8000/health  # Harus return {"status":"healthy"}
+curl -I http://localhost:3000      # Harus return HTTP 200
+curl -I http://localhost:8080      # Harus return HTTP 200
+
+# 5. Baru start ngrok
+ngrok start --all --config ngrok.yml
+```
+
+**Lihat detail troubleshooting**: [NGROK_TROUBLESHOOTING.md](NGROK_TROUBLESHOOTING.md)
 
 ---
 

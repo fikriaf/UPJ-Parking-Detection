@@ -1,7 +1,7 @@
 // Configuration for ParkIt Admin Dashboard
 const CONFIG = {
-  // API Configuration
-  API_BASE_URL: window.ENV?.BACKEND_API_URL || 'http://localhost:8000',
+  // API Configuration (JANGAN pakai trailing slash!)
+  API_BASE_URL: (window.ENV?.BACKEND_API_URL || 'http://localhost:8000'),
   API_TIMEOUT: 30000, // 30 seconds
   
   // Auto-refresh intervals
