@@ -1,7 +1,8 @@
 // Configuration for ParkIt Admin Dashboard
 const CONFIG = {
   // API Configuration (JANGAN pakai trailing slash!)
-  API_BASE_URL: (window.ENV?.BACKEND_API_URL || 'http://localhost:8000'),
+  // Gunakan host.docker.internal untuk akses dari Docker container ke host machine
+  API_BASE_URL: (window.ENV?.BACKEND_API_URL || 'http://host.docker.internal:8000'),
   API_TIMEOUT: 30000, // 30 seconds
   
   // Auto-refresh intervals
