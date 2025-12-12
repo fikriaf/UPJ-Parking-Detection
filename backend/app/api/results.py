@@ -11,10 +11,22 @@ router = APIRouter()
 # IMPORTANT: Static routes MUST come before dynamic routes like /{session_id}
 
 @router.get("/latest")
-async def get_latest_results(limit: int = 10, skip: int = 0):
-    """Get latest detection results (Public - for users to view)"""
+async def get_latest_results(limit: int = 10, skip: int = 0, status: str = None):
+    """Get latest detection results (Public - for users to view)
+    
+    Args:
+        limit: Number of results to return
+        skip: Number of results to skip
+        status: Filter by status (active, completed, or None for all)
+    """
     db = get_database()
-    cursor = db.detection_sessions.find({"status": "completed"}).sort("created_at", -1).skip(skip).limit(limit)
+    
+    # Build query - if status provided, filter by it; otherwise get all
+    query = {}
+    if status:
+        query["status"] = status
+    
+    cursor = db.detection_sessions.find(query).sort("created_at", -1).skip(skip).limit(limit)
     sessions = await cursor.to_list(length=limit)
     
     return {
