@@ -12,7 +12,7 @@ import sys
 import time
 
 # Configuration
-BASE_URL = "https://1d19f09e7145.ngrok-free.app"
+BASE_URL = "https://overtame-dewitt-throbbingly.ngrok-free.dev"
 API_KEY = "parkit-admin-best-UHUYYYYY"
 HEADERS = {
     "X-API-Key": API_KEY,
@@ -80,7 +80,7 @@ def test_create_calibration():
                 "row_index": 2, 
                 "y_coordinate": 5250,  # Y terkecil = paling atas (jauh dari kamera)
                 "label": "Row 2",
-                "start_x": 690,  # Lebih sempit (perspektif mengerucut)
+                "start_x": 800,  # Lebih sempit (perspektif mengerucut)
                 "end_x": 5700
             },
             {
@@ -99,7 +99,7 @@ def test_create_calibration():
             },
             {
                 "row_index": 5, 
-                "y_coordinate": 4171,  # Y terkecil = paling atas (jauh dari kamera)
+                "y_coordinate": 4100,  # Y terkecil = paling atas (jauh dari kamera)
                 "label": "Row 5",
                 "start_x": 1262,  # Lebih sempit (perspektif mengerucut)
                 "end_x": 5083
