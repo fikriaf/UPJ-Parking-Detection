@@ -12,6 +12,7 @@ class ApiClient {
     
     // Default headers
     const headers = {
+      'ngrok-skip-browser-warning': 'true',  // Skip ngrok warning page
       ...options.headers
     };
     

@@ -3,17 +3,73 @@ const ResultsPage = {
   state: {
     autoRefresh: true,
     refreshInterval: null,
-    history: []
+    history: [],
+    // Live image streaming
+    liveImageInterval: null,
+    liveImageDelay: 1000, // Default 1 second
+    currentSessionId: null
   },
 
   async render() {
     uiManager.setPageTitle('Results');
+    
+    // Load saved settings
+    this.state.liveImageDelay = parseInt(localStorage.getItem('parkit_result_delay') || '1000');
     
     const container = document.getElementById('page-container');
     container.innerHTML = `
       <div class="page-header">
         <h1 class="page-title">Detection Results</h1>
         <p class="page-description">Monitor live detection and view history</p>
+      </div>
+      
+      <!-- Auto-Capture Status Banner -->
+      <div id="auto-capture-banner" class="card" style="display: none; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+        <div class="card-body" style="padding: var(--spacing-md);">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--spacing-md);">
+            <div>
+              <strong><i class="fas fa-video"></i> Auto-Capture Running</strong>
+              <span id="banner-session-id" style="margin-left: var(--spacing-md);"></span>
+            </div>
+            <div>
+              Captured: <strong id="banner-capture-count">0</strong> frames
+            </div>
+            <button id="stop-auto-capture-btn" class="btn btn-sm" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);">
+              <i class="fas fa-stop"></i> Stop
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Live Image Stream -->
+      <div class="card">
+        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--spacing-md);">
+          <h2 class="card-title"><i class="fas fa-broadcast-tower"></i> Live Result Stream</h2>
+          <div style="display: flex; align-items: center; gap: var(--spacing-md); flex-wrap: wrap;">
+            <div class="form-group" style="margin-bottom: 0; display: flex; align-items: center; gap: var(--spacing-sm);">
+              <label for="live-session-id" style="white-space: nowrap;">Session ID:</label>
+              <input type="text" id="live-session-id" class="form-control" placeholder="Enter session ID" style="width: 200px;" value="${localStorage.getItem('parkit_auto_session_id') || ''}">
+            </div>
+            <div class="form-group" style="margin-bottom: 0; display: flex; align-items: center; gap: var(--spacing-sm);">
+              <label for="result-delay" style="white-space: nowrap;">Refresh (s):</label>
+              <input type="number" id="result-delay" class="form-control" min="1" max="60" value="${this.state.liveImageDelay / 1000}" style="width: 70px;">
+            </div>
+            <button id="start-live-stream-btn" class="btn btn-success btn-sm">
+              <i class="fas fa-play"></i> Start
+            </button>
+            <button id="stop-live-stream-btn" class="btn btn-danger btn-sm" style="display: none;">
+              <i class="fas fa-stop"></i> Stop
+            </button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div id="live-image-container" style="text-align: center;">
+            <div class="empty-state">
+              <div class="empty-state-icon"><i class="fas fa-image"></i></div>
+              <div class="empty-state-message">Enter Session ID and click Start to view live results</div>
+            </div>
+          </div>
+        </div>
       </div>
       
       <div class="card">
@@ -82,6 +138,151 @@ const ResultsPage = {
     document.getElementById('close-result-detail-btn').addEventListener('click', () => {
       document.getElementById('result-detail-modal').style.display = 'none';
     });
+
+    // Live image stream controls
+    document.getElementById('start-live-stream-btn').addEventListener('click', () => {
+      this.startLiveImageStream();
+    });
+
+    document.getElementById('stop-live-stream-btn').addEventListener('click', () => {
+      this.stopLiveImageStream();
+    });
+
+    // Save delay on change
+    document.getElementById('result-delay').addEventListener('change', (e) => {
+      const delay = parseInt(e.target.value) * 1000;
+      if (delay >= 1000 && delay <= 60000) {
+        this.state.liveImageDelay = delay;
+        localStorage.setItem('parkit_result_delay', delay.toString());
+        uiManager.showNotification(`Refresh delay saved: ${e.target.value}s`, 'success');
+      }
+    });
+
+    // Stop auto-capture from banner
+    document.getElementById('stop-auto-capture-btn').addEventListener('click', () => {
+      if (typeof AutoCaptureManager !== 'undefined') {
+        AutoCaptureManager.stop();
+        this.updateAutoCaptureStatus();
+      }
+    });
+
+    // Update auto-capture status
+    this.updateAutoCaptureStatus();
+    
+    // Listen for auto-capture status changes
+    if (typeof AutoCaptureManager !== 'undefined') {
+      AutoCaptureManager.onStatusChange((status) => {
+        this.updateAutoCaptureStatus(status);
+      });
+    }
+  },
+
+  updateAutoCaptureStatus(status) {
+    if (typeof AutoCaptureManager === 'undefined') return;
+    
+    const s = status || AutoCaptureManager.getStatus();
+    const banner = document.getElementById('auto-capture-banner');
+    
+    if (s.isRunning) {
+      banner.style.display = 'block';
+      document.getElementById('banner-session-id').textContent = `Session: ${s.sessionId}`;
+      document.getElementById('banner-capture-count').textContent = s.captureCount;
+      
+      // Auto-fill session ID
+      const sessionInput = document.getElementById('live-session-id');
+      if (sessionInput && !sessionInput.value) {
+        sessionInput.value = s.sessionId;
+      }
+    } else {
+      banner.style.display = 'none';
+    }
+  },
+
+  startLiveImageStream() {
+    const sessionId = document.getElementById('live-session-id').value.trim();
+    
+    if (!sessionId) {
+      uiManager.showNotification('Please enter Session ID', 'error');
+      return;
+    }
+
+    this.state.currentSessionId = sessionId;
+    
+    // Update UI
+    document.getElementById('start-live-stream-btn').style.display = 'none';
+    document.getElementById('stop-live-stream-btn').style.display = 'inline-block';
+    
+    // Start fetching
+    this.fetchLiveImage();
+    
+    uiManager.showNotification(`Live stream started (refresh: ${this.state.liveImageDelay / 1000}s)`, 'success');
+  },
+
+  stopLiveImageStream() {
+    if (this.state.liveImageInterval) {
+      clearTimeout(this.state.liveImageInterval);
+      this.state.liveImageInterval = null;
+    }
+    
+    this.state.currentSessionId = null;
+    
+    // Update UI
+    document.getElementById('start-live-stream-btn').style.display = 'inline-block';
+    document.getElementById('stop-live-stream-btn').style.display = 'none';
+    
+    uiManager.showNotification('Live stream stopped', 'info');
+  },
+
+  async fetchLiveImage() {
+    if (!this.state.currentSessionId) return;
+
+    const container = document.getElementById('live-image-container');
+    
+    try {
+      const imageUrl = `${CONFIG.API_BASE_URL}/api/results/${this.state.currentSessionId}/image?t=${Date.now()}`;
+      
+      // Fetch with ngrok header
+      const response = await fetch(imageUrl, {
+        headers: {
+          'ngrok-skip-browser-warning': 'true'
+        }
+      });
+      
+      if (response.ok) {
+        const blob = await response.blob();
+        const objectUrl = URL.createObjectURL(blob);
+        
+        container.innerHTML = `
+          <div style="position: relative; display: inline-block;">
+            <img src="${objectUrl}" style="max-width: 100%; max-height: 70vh; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" alt="Live Result">
+            <div style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.7); color: #0f0; padding: 5px 10px; border-radius: 4px; font-family: monospace; font-size: 12px;">
+              <i class="fas fa-circle" style="color: #0f0; animation: blink 1s infinite;"></i> LIVE
+            </div>
+          </div>
+          <div style="margin-top: var(--spacing-md); color: var(--text-secondary); font-size: var(--font-size-sm);">
+            Session: ${this.state.currentSessionId} | Last update: ${new Date().toLocaleTimeString()}
+          </div>
+          <style>
+            @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+          </style>
+        `;
+      } else {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon"><i class="fas fa-exclamation-triangle"></i></div>
+            <div class="empty-state-message">No image available for this session</div>
+            <div class="empty-state-description">Session may not have completed detection yet</div>
+          </div>
+        `;
+      }
+    } catch (error) {
+      console.error('[Results] Fetch live image error:', error);
+    }
+
+    // Schedule next fetch
+    if (this.state.currentSessionId) {
+      this.state.liveImageInterval = setTimeout(() => this.fetchLiveImage(), this.state.liveImageDelay);
+    }
   },
 
   async loadLiveDetection() {
@@ -368,5 +569,6 @@ const ResultsPage = {
 
   cleanup() {
     this.stopAutoRefresh();
+    this.stopLiveImageStream();
   }
 };

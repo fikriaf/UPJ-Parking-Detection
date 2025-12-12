@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 Test Parking Calibration System dengan Real Image dari Dataset UPJ
+Mengambil result dan verify langsung dari endpoint API
 """
 
 import requests
@@ -8,11 +9,15 @@ import json
 import uuid
 from pathlib import Path
 import sys
+import time
 
 # Configuration
-BASE_URL = "http://localhost:8000"
+BASE_URL = "https://1d19f09e7145.ngrok-free.app"
 API_KEY = "parkit-admin-best-UHUYYYYY"
-HEADERS = {"X-API-Key": API_KEY}
+HEADERS = {
+    "X-API-Key": API_KEY,
+    "ngrok-skip-browser-warning": "true"
+}
 
 # Real image path
 REAL_IMAGE_PATH = Path(r"D:\script\PYTHON\UPJ-Parking-Detection\backend\3.jpg")
@@ -22,9 +27,10 @@ def test_server_health():
     print("\n=== Test 1: Server Health Check ===")
     
     try:
-        response = requests.get(f"{BASE_URL}/health", timeout=5)
+        response = requests.get(f"{BASE_URL}/health", headers=HEADERS, timeout=10)
         if response.status_code == 200:
             print("✅ Server is running")
+            print(f"   Response: {response.json()}")
             return True
         else:
             print(f"❌ Server returned status: {response.status_code}")
@@ -59,27 +65,76 @@ def test_create_calibration():
             {
                 "row_index": 0, 
                 "y_coordinate": 6400,  # Y terbesar = paling bawah (dekat kamera)
-                "label": "Row 0 (Bottom/Near)",
+                "label": "Row 0",
                 "start_x": 400,  # Lebih lebar (dekat kamera)
                 "end_x": 6100
             },
             {
                 "row_index": 1, 
                 "y_coordinate": 5650,  # Y sedang = tengah
-                "label": "Row 1 (Middle)",
+                "label": "Row 1",
                 "start_x": 600,  # Sedang
                 "end_x": 5900
             },
             {
                 "row_index": 2, 
                 "y_coordinate": 5250,  # Y terkecil = paling atas (jauh dari kamera)
-                "label": "Row 2 (Top/Far)",
-                "start_x": 650,  # Lebih sempit (perspektif mengerucut)
+                "label": "Row 2",
+                "start_x": 690,  # Lebih sempit (perspektif mengerucut)
                 "end_x": 5700
+            },
+            {
+                "row_index": 3, 
+                "y_coordinate": 4744,  # Y terbesar = paling bawah (dekat kamera)
+                "label": "Row 3",
+                "start_x": 1030,  # Lebih lebar (dekat kamera)
+                "end_x": 5376
+            },
+            {
+                "row_index": 4, 
+                "y_coordinate": 4444,  # Y sedang = tengah
+                "label": "Row 4",
+                "start_x": 1146,  # Sedang
+                "end_x": 5346
+            },
+            {
+                "row_index": 5, 
+                "y_coordinate": 4171,  # Y terkecil = paling atas (jauh dari kamera)
+                "label": "Row 5",
+                "start_x": 1262,  # Lebih sempit (perspektif mengerucut)
+                "end_x": 5083
+            },
+            {
+                "row_index": 6, 
+                "y_coordinate": 3870,  # Y sedang = tengah
+                "label": "Row 6",
+                "start_x": 1372,  # Sedang
+                "end_x": 4967
+            },
+            {
+                "row_index": 7, 
+                "y_coordinate": 3600,  # Y terkecil = paling atas (jauh dari kamera)
+                "label": "Row 7",
+                "start_x": 1513,  # Lebih sempit (perspektif mengerucut)
+                "end_x": 4722
+            },
+            {
+                "row_index": 8, 
+                "y_coordinate": 3371,  # Y terbesar = paling bawah (dekat kamera)
+                "label": "Row 8",
+                "start_x": 1574,  # Lebih lebar (dekat kamera)
+                "end_x": 4679
+            },
+            {
+                "row_index": 9, 
+                "y_coordinate": 3158,  # Y sedang = tengah
+                "label": "Row 9",
+                "start_x": 1299,  # Sedang
+                "end_x": 4557
             }
         ],
-        "min_space_width": 100.0,  # Lebar space di ROW 0 (paling bawah)
-        "space_coefficient": 0.85,  # Row ke atas akan lebih kecil
+        "min_space_width": 106.0,  # Lebar space di ROW 0 (paling bawah)
+        "space_coefficient": 0.95,  # Row ke atas akan lebih kecil
         "row_start_x": 40,  # Global fallback (jika per-row tidak diset)
         "row_end_x": 6100
     }
@@ -163,12 +218,17 @@ def test_upload_real_image(camera_id):
         print(f"❌ Error: {e}")
         return False, None
 
+
 def test_get_session_results(session_id):
-    """Test 4: Get detailed session results"""
+    """Test 4: Get detailed session results from endpoint"""
     print("\n=== Test 4: Get Session Results ===")
     
     try:
-        response = requests.get(f"{BASE_URL}/api/results/{session_id}")
+        response = requests.get(
+            f"{BASE_URL}/api/results/{session_id}",
+            headers=HEADERS,
+            timeout=10
+        )
         
         if response.status_code == 200:
             result = response.json()
@@ -177,81 +237,127 @@ def test_get_session_results(session_id):
             print(f"   Session ID: {result['session_id']}")
             print(f"   Camera ID: {result.get('camera_id', 'N/A')}")
             print(f"   Status: {result.get('status', 'N/A')}")
-            print(f"   Total frames: {len(result.get('frames', []))}")
+            print(f"   Total frames: {result.get('total_frames', 0)}")
             print(f"   Max detections: {result.get('max_detection_count', 0)}")
             
-            # Check empty spaces
-            if 'empty_spaces' in result:
-                empty_spaces = result['empty_spaces']
-                print(f"\n📍 Empty Spaces Details:")
-                print(f"   Total empty spaces: {len(empty_spaces)}")
-                
-                if empty_spaces:
-                    print(f"\n   First 3 empty spaces:")
-                    for i, space in enumerate(empty_spaces[:3], 1):
-                        print(f"     {i}. {space['space_id']}")
-                        print(f"        Row: {space['row_index']}")
-                        print(f"        Position: X({space['x1']}-{space['x2']}), Y({space['y1']}-{space['y2']})")
-                        print(f"        Width: {space['width']:.1f} pixels")
-                        print(f"        Can fit motorcycle: {space['can_fit_motorcycle']}")
-            
-            # Check visualization
+            # Check best_frame
             if 'best_frame' in result and result['best_frame']:
-                best_frame = result['best_frame']
-                if 'image_path' in best_frame:
-                    img_path = Path(best_frame['image_path'])
-                    if img_path.exists():
-                        print(f"\n🖼️  Visualization Image:")
-                        print(f"   Path: {img_path}")
-                        print(f"   Size: {img_path.stat().st_size / 1024:.1f} KB")
-                        print(f"   ✅ Image file exists")
-                    else:
-                        print(f"   ❌ Image file not found: {img_path}")
+                frame = result['best_frame']
+                print(f"\n📊 Best Frame Analysis:")
+                print(f"   Total Motorcycles: {frame.get('total_motorcycles', frame.get('detection_count', 0))}")
+                print(f"   Empty Spaces: {frame.get('total_empty_spaces', 'N/A')}")
+                print(f"   Occupancy Rate: {frame.get('parking_occupancy_rate', 'N/A')}%")
+                
+                # Empty spaces per row
+                if 'empty_spaces_per_row' in frame:
+                    print(f"\n   Empty Spaces per Row:")
+                    for row, count in frame['empty_spaces_per_row'].items():
+                        print(f"     Row {row}: {count} spaces")
+                
+                # Detections
+                detections = frame.get('detections', [])
+                print(f"\n   Detections: {len(detections)} motorcycles")
+                if detections:
+                    print(f"   First 3 detections:")
+                    for i, det in enumerate(detections[:3], 1):
+                        bbox = det.get('bbox', {})
+                        conf = det.get('confidence', 0)
+                        row = det.get('assigned_row', 'N/A')
+                        print(f"     {i}. Conf: {conf:.2%}, Row: {row}")
             
-            return True
+            return True, result
         else:
             print(f"❌ Failed to get results")
             print(f"   Status: {response.status_code}")
+            return False, None
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        return False, None
+
+def test_get_result_image(session_id):
+    """Test 5: Get result image from endpoint"""
+    print(f"\n=== Test 5: Get Result Image ===")
+    
+    try:
+        response = requests.get(
+            f"{BASE_URL}/api/results/{session_id}/image",
+            headers=HEADERS,
+            timeout=30
+        )
+        
+        if response.status_code == 200:
+            content_type = response.headers.get('content-type', '')
+            content_length = len(response.content)
+            
+            print("✅ Result image retrieved from endpoint")
+            print(f"   Content-Type: {content_type}")
+            print(f"   Size: {content_length / 1024:.1f} KB")
+            
+            # Save image locally for verification
+            output_path = Path(f"test_result_{session_id[:8]}.jpg")
+            with open(output_path, 'wb') as f:
+                f.write(response.content)
+            print(f"   Saved to: {output_path}")
+            
+            return True
+        elif response.status_code == 404:
+            print("⚠️ No image available for this session")
+            return True
+        else:
+            print(f"❌ Failed: {response.status_code}")
             return False
     except Exception as e:
         print(f"❌ Error: {e}")
         return False
 
 def test_verify_coordinates(session_id):
-    """Test 5: Verify coordinate accuracy"""
-    print("\n=== Test 5: Verify Coordinate Accuracy ===")
+    """Test 6: Verify coordinate accuracy from endpoint data"""
+    print("\n=== Test 6: Verify Coordinate Accuracy ===")
     
     try:
-        response = requests.get(f"{BASE_URL}/api/results/{session_id}")
+        response = requests.get(
+            f"{BASE_URL}/api/results/{session_id}",
+            headers=HEADERS,
+            timeout=10
+        )
         
         if response.status_code == 200:
             result = response.json()
             
-            if 'empty_spaces' not in result or not result['empty_spaces']:
-                print("⚠️  No empty spaces to verify")
+            if 'best_frame' not in result or not result['best_frame']:
+                print("⚠️ No best_frame to verify")
                 return True
             
-            empty_spaces = result['empty_spaces']
+            frame = result['best_frame']
+            empty_spaces = frame.get('empty_spaces', [])
+            
+            if not empty_spaces:
+                print("⚠️ No empty spaces to verify")
+                return True
+            
             all_valid = True
             invalid_count = 0
             
             for space in empty_spaces:
                 # Check X coordinates
-                if not (0 <= space['x1'] < space['x2'] <= 1920):
-                    print(f"❌ Invalid X coordinates in {space['space_id']}: {space['x1']}-{space['x2']}")
+                x1, x2 = space.get('x1', 0), space.get('x2', 0)
+                y1, y2 = space.get('y1', 0), space.get('y2', 0)
+                
+                if x1 >= x2:
+                    print(f"❌ Invalid X coordinates in {space.get('space_id')}: {x1}-{x2}")
                     all_valid = False
                     invalid_count += 1
                 
-                # Check Y coordinates
-                if not (0 <= space['y1'] < space['y2'] <= 1080):
-                    print(f"❌ Invalid Y coordinates in {space['space_id']}: {space['y1']}-{space['y2']}")
+                if y1 >= y2:
+                    print(f"❌ Invalid Y coordinates in {space.get('space_id')}: {y1}-{y2}")
                     all_valid = False
                     invalid_count += 1
                 
                 # Check width calculation
-                calculated_width = space['x2'] - space['x1']
-                if abs(calculated_width - space['width']) > 1:
-                    print(f"❌ Width mismatch in {space['space_id']}: calculated={calculated_width}, stored={space['width']}")
+                calculated_width = x2 - x1
+                stored_width = space.get('width', 0)
+                if abs(calculated_width - stored_width) > 1:
+                    print(f"❌ Width mismatch in {space.get('space_id')}: calc={calculated_width}, stored={stored_width}")
                     all_valid = False
                     invalid_count += 1
             
@@ -263,6 +369,104 @@ def test_verify_coordinates(session_id):
                 return False
         else:
             print(f"❌ Failed to get results: {response.status_code}")
+            return False
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        return False
+
+
+def test_get_live_results():
+    """Test 7: Get live detection results from endpoint"""
+    print("\n=== Test 7: Get Live Results ===")
+    
+    try:
+        response = requests.get(
+            f"{BASE_URL}/api/results/live",
+            headers=HEADERS,
+            timeout=10
+        )
+        
+        if response.status_code == 200:
+            result = response.json()
+            print("✅ Live results retrieved")
+            print(f"   Session ID: {result.get('session_id', 'N/A')}")
+            print(f"   Camera ID: {result.get('camera_id', 'N/A')}")
+            print(f"   Status: {result.get('status', 'N/A')}")
+            print(f"   Max Detections: {result.get('max_detection_count', 0)}")
+            
+            if 'best_frame' in result and result['best_frame']:
+                frame = result['best_frame']
+                print(f"\n📊 Live Analysis:")
+                print(f"   Motorcycles: {frame.get('total_motorcycles', frame.get('detection_count', 0))}")
+                print(f"   Empty Spaces: {frame.get('total_empty_spaces', 'N/A')}")
+                print(f"   Occupancy: {frame.get('parking_occupancy_rate', 'N/A')}%")
+            
+            return True, result.get('session_id')
+        elif response.status_code == 404:
+            print("⚠️ No active session found")
+            return True, None
+        else:
+            print(f"❌ Failed: {response.status_code}")
+            return False, None
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        return False, None
+
+def test_get_latest_results():
+    """Test 8: Get latest results history from endpoint"""
+    print("\n=== Test 8: Get Latest Results History ===")
+    
+    try:
+        response = requests.get(
+            f"{BASE_URL}/api/results/latest?limit=5",
+            headers=HEADERS,
+            timeout=10
+        )
+        
+        if response.status_code == 200:
+            data = response.json()
+            results = data.get('results', [])
+            print(f"✅ Retrieved {len(results)} sessions from endpoint")
+            
+            for i, r in enumerate(results[:5], 1):
+                print(f"\n   {i}. Session: {r.get('session_id', 'N/A')[:8]}...")
+                print(f"      Camera: {r.get('camera_id', 'N/A')}")
+                print(f"      Status: {r.get('status', 'N/A')}")
+                print(f"      Detections: {r.get('max_detection_count', 0)}")
+            
+            return True
+        else:
+            print(f"❌ Failed: {response.status_code}")
+            return False
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        return False
+
+def test_admin_stats():
+    """Test 9: Get admin statistics from endpoint"""
+    print("\n=== Test 9: Get Admin Statistics ===")
+    
+    try:
+        response = requests.get(
+            f"{BASE_URL}/api/admin/stats",
+            headers=HEADERS,
+            timeout=10
+        )
+        
+        if response.status_code == 200:
+            stats = response.json()
+            print("✅ Admin stats retrieved from endpoint")
+            print(f"   Total Users: {stats.get('total_users', 0)}")
+            print(f"   Total Sessions: {stats.get('total_sessions', 0)}")
+            print(f"   Active Sessions: {stats.get('active_sessions', 0)}")
+            print(f"   Completed Sessions: {stats.get('completed_sessions', 0)}")
+            print(f"   Total Detections: {stats.get('total_detections', 0)}")
+            return True
+        elif response.status_code == 403:
+            print("❌ Forbidden - Check API key")
+            return False
+        else:
+            print(f"❌ Failed: {response.status_code}")
             return False
     except Exception as e:
         print(f"❌ Error: {e}")
@@ -289,14 +493,15 @@ def main():
     """Run all tests with real UPJ parking image"""
     print("="*60)
     print("🚗 Parking Calibration System - Real Image Test")
+    print("   (Verify langsung dari endpoint API)")
     print("="*60)
     print(f"Base URL: {BASE_URL}")
     print(f"Image: {REAL_IMAGE_PATH.name}")
+    print(f"Timestamp: {time.strftime('%Y-%m-%d %H:%M:%S')}")
     
     # Test 1: Server health
     if not test_server_health():
-        print("\n❌ Server is not running. Please start it first:")
-        print("   cd backend && uvicorn main:app --reload")
+        print("\n❌ Server is not running. Please start it first.")
         return 1
     
     # Test 2: Create calibration
@@ -313,22 +518,32 @@ def main():
         cleanup(camera_id)
         return 1
     
-    # Test 4: Get results
+    # Test 4: Get results from endpoint
     test_get_session_results(session_id)
     
-    # Test 5: Verify coordinates
+    # Test 5: Get result image from endpoint
+    test_get_result_image(session_id)
+    
+    # Test 6: Verify coordinates from endpoint data
     test_verify_coordinates(session_id)
     
-    # Cleanup
+    # Test 7: Get live results
+    test_get_live_results()
+    
+    # Test 8: Get latest results
+    test_get_latest_results()
+    
+    # Test 9: Admin stats
+    test_admin_stats()
+    
+    # Cleanup (optional - comment out to keep calibration)
     # cleanup(camera_id)
     
     print("\n" + "="*60)
     print("✅ All tests completed!")
     print("="*60)
-    print("\nNext steps:")
-    print("1. Check visualization image in uploads/best_frames/")
-    print("2. Adjust calibration parameters if needed")
-    print("3. Test with more images from the dataset")
+    print("\nSemua result diambil dan diverify langsung dari endpoint API.")
+    print(f"Result image disimpan di: test_result_{session_id[:8]}.jpg")
     
     return 0
 

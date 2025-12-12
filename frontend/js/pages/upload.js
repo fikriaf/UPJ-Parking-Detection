@@ -10,7 +10,12 @@ const UploadPage = {
     cameraUrl: '',
     cameraConnected: false,
     refreshInterval: null,
-    rotation: 90 // Default 90° for portrait camera (724x1280)
+    rotation: 90, // Default 90° for portrait camera (724x1280)
+    // Auto-capture state
+    autoCapture: false,
+    autoCaptureInterval: null,
+    autoCaptureDelay: 5000, // Default 5 seconds
+    autoCaptureCount: 0
   },
 
   async render() {
@@ -18,6 +23,8 @@ const UploadPage = {
 
     // Load saved camera URL from localStorage
     const savedCameraUrl = localStorage.getItem('parkit_camera_url') || '';
+    const savedAutoDelay = localStorage.getItem('parkit_auto_delay') || '5000';
+    this.state.autoCaptureDelay = parseInt(savedAutoDelay);
 
     const container = document.getElementById('page-container');
     container.innerHTML = `
@@ -57,8 +64,31 @@ const UploadPage = {
               <button id="capture-frame-btn" class="btn btn-success">
                 <i class="fas fa-camera"></i> Capture Frame
               </button>
+              <button id="auto-capture-btn" class="btn btn-warning">
+                <i class="fas fa-play"></i> Start Auto-Capture
+              </button>
               <small style="color: var(--text-secondary);">
                 Camera in portrait mode (724x1280) - Click to mark coordinates
+              </small>
+            </div>
+            
+            <!-- Auto-Capture Configuration -->
+            <div style="margin-top: var(--spacing-md); padding: var(--spacing-md); background: var(--bg-secondary); border-radius: 8px;">
+              <h4 style="margin-bottom: var(--spacing-sm);"><i class="fas fa-cog"></i> Auto-Capture Settings</h4>
+              <div style="display: flex; gap: var(--spacing-md); align-items: center; flex-wrap: wrap;">
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label for="auto-delay">Capture Interval (seconds)</label>
+                  <input type="number" id="auto-delay" class="form-control" min="1" max="60" value="${savedAutoDelay / 1000}" style="width: 100px;">
+                </div>
+                <button id="save-delay-btn" class="btn btn-secondary btn-sm">
+                  <i class="fas fa-save"></i> Save
+                </button>
+                <div id="auto-capture-status" style="color: var(--text-secondary);">
+                  Status: <span id="auto-status-text">Stopped</span> | Captured: <span id="auto-count">0</span>
+                </div>
+              </div>
+              <small style="color: var(--text-secondary); display: block; margin-top: var(--spacing-sm);">
+                Auto-capture will automatically capture and upload frames at the specified interval
               </small>
             </div>
           </div>
@@ -139,6 +169,16 @@ const UploadPage = {
     // Capture frame from camera
     document.getElementById('capture-frame-btn').addEventListener('click', () => {
       this.captureFrame();
+    });
+
+    // Auto-capture button
+    document.getElementById('auto-capture-btn').addEventListener('click', () => {
+      this.toggleAutoCapture();
+    });
+
+    // Save delay button
+    document.getElementById('save-delay-btn').addEventListener('click', () => {
+      this.saveAutoDelay();
     });
 
     // Mouse move on camera preview for coordinates
@@ -612,9 +652,163 @@ const UploadPage = {
   },
 
   cleanup() {
+    // Stop auto-capture when leaving page
+    if (this.state.autoCapture) {
+      this.stopAutoCapture();
+    }
     // Disconnect camera when leaving page
     if (this.state.cameraConnected) {
       this.disconnectCamera();
     }
+  },
+
+  // Auto-Capture Functions
+  saveAutoDelay() {
+    const delayInput = document.getElementById('auto-delay');
+    const delaySeconds = parseInt(delayInput.value);
+    
+    if (isNaN(delaySeconds) || delaySeconds < 1 || delaySeconds > 60) {
+      uiManager.showNotification('Delay must be between 1-60 seconds', 'error');
+      return;
+    }
+    
+    this.state.autoCaptureDelay = delaySeconds * 1000;
+    localStorage.setItem('parkit_auto_delay', this.state.autoCaptureDelay.toString());
+    uiManager.showNotification(`Auto-capture delay saved: ${delaySeconds} seconds`, 'success');
+  },
+
+  toggleAutoCapture() {
+    if (this.state.autoCapture) {
+      this.stopAutoCapture();
+    } else {
+      this.startAutoCapture();
+    }
+  },
+
+  startAutoCapture() {
+    // Validate session ID
+    const sessionId = document.getElementById('session-id').value.trim();
+    if (!sessionId) {
+      uiManager.showNotification('Session ID is required for auto-capture', 'error');
+      return;
+    }
+
+    if (!this.state.cameraConnected) {
+      uiManager.showNotification('Please connect camera first', 'error');
+      return;
+    }
+
+    this.state.sessionId = sessionId;
+    this.state.cameraId = document.getElementById('camera-id').value.trim() || null;
+    this.state.autoCapture = true;
+    this.state.autoCaptureCount = 0;
+
+    // Update UI
+    const btn = document.getElementById('auto-capture-btn');
+    btn.innerHTML = '<i class="fas fa-stop"></i> Stop Auto-Capture';
+    btn.classList.remove('btn-warning');
+    btn.classList.add('btn-danger');
+    
+    document.getElementById('auto-status-text').textContent = 'Running';
+    document.getElementById('auto-status-text').style.color = 'var(--success-color)';
+
+    uiManager.showNotification(`Auto-capture started (every ${this.state.autoCaptureDelay / 1000}s)`, 'success');
+
+    // Start auto-capture loop
+    this.runAutoCapture();
+  },
+
+  stopAutoCapture() {
+    this.state.autoCapture = false;
+    
+    if (this.state.autoCaptureInterval) {
+      clearTimeout(this.state.autoCaptureInterval);
+      this.state.autoCaptureInterval = null;
+    }
+
+    // Update UI
+    const btn = document.getElementById('auto-capture-btn');
+    btn.innerHTML = '<i class="fas fa-play"></i> Start Auto-Capture';
+    btn.classList.remove('btn-danger');
+    btn.classList.add('btn-warning');
+    
+    document.getElementById('auto-status-text').textContent = 'Stopped';
+    document.getElementById('auto-status-text').style.color = 'var(--text-secondary)';
+
+    uiManager.showNotification(`Auto-capture stopped. Total captured: ${this.state.autoCaptureCount}`, 'info');
+  },
+
+  async runAutoCapture() {
+    if (!this.state.autoCapture || !this.state.cameraConnected) {
+      this.stopAutoCapture();
+      return;
+    }
+
+    try {
+      // Capture frame
+      const blob = await this.captureFrameAsBlob();
+      
+      if (blob) {
+        // Upload immediately
+        const file = new File([blob], `auto_capture_${Date.now()}.jpg`, { type: 'image/jpeg' });
+        
+        await apiClient.uploadFrame(file, this.state.sessionId, this.state.cameraId);
+        
+        this.state.autoCaptureCount++;
+        document.getElementById('auto-count').textContent = this.state.autoCaptureCount;
+        
+        console.log(`[AutoCapture] Frame ${this.state.autoCaptureCount} uploaded`);
+      }
+    } catch (error) {
+      console.error('[AutoCapture] Error:', error);
+      // Don't stop on error, just log it
+    }
+
+    // Schedule next capture
+    if (this.state.autoCapture) {
+      this.state.autoCaptureInterval = setTimeout(() => {
+        this.runAutoCapture();
+      }, this.state.autoCaptureDelay);
+    }
+  },
+
+  captureFrameAsBlob() {
+    return new Promise((resolve, reject) => {
+      try {
+        const preview = document.getElementById('camera-preview');
+
+        if (!preview || !preview.complete || !preview.naturalWidth) {
+          reject(new Error('Image not loaded'));
+          return;
+        }
+
+        // Create canvas to capture image with 90° rotation
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Swap width and height for 90° rotation (portrait)
+        canvas.width = preview.naturalHeight;
+        canvas.height = preview.naturalWidth;
+
+        // Apply 90° rotation transformation
+        ctx.save();
+        ctx.translate(canvas.width, 0);
+        ctx.rotate(90 * Math.PI / 180);
+        ctx.drawImage(preview, 0, 0);
+        ctx.restore();
+
+        // Convert to blob
+        canvas.toBlob((blob) => {
+          if (blob) {
+            resolve(blob);
+          } else {
+            reject(new Error('Failed to create blob'));
+          }
+        }, 'image/jpeg', 0.95);
+
+      } catch (error) {
+        reject(error);
+      }
+    });
   }
 };
