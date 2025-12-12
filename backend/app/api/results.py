@@ -15,7 +15,7 @@ async def get_latest_results(limit: int = 10, skip: int = 0, status: str = None)
     """Get latest detection results (Public - for users to view)
     
     Args:
-        limit: Number of results to return
+        limit: Number of results to returns
         skip: Number of results to skip
         status: Filter by status (active, completed, or None for all)
     """
