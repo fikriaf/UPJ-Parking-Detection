@@ -4,7 +4,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from datetime import datetime
 import os
 
-from app.api import frames, results, users, admin, calibration
+from app.api import frames, results, users, admin, calibration, motorcycles
 from app.core.config import settings
 from app.db.mongodb import connect_to_mongo, close_mongo_connection
 
@@ -64,3 +64,4 @@ app.include_router(results.router, prefix="/api/results", tags=["Results"])
 app.include_router(users.router, prefix="/api/users", tags=["Users"])
 app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
 app.include_router(calibration.router, prefix="/api/admin/calibration", tags=["Calibration"])
+app.include_router(motorcycles.router, prefix="/api/motorcycles", tags=["Motorcycles"])

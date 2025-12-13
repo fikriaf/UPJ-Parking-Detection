@@ -2,7 +2,7 @@
 const CONFIG = {
   // API Configuration (JANGAN pakai trailing slash!)
   // Gunakan host.docker.internal untuk akses dari Docker container ke host machine
-  API_BASE_URL: ('https://34eaa782e43f.ngrok-free.app'),
+  API_BASE_URL: ('https://webmaster-reputation-exchanges-automated.trycloudflare.com'),
   API_TIMEOUT: 30000, // 30 seconds
 
   // Auto-refresh intervals

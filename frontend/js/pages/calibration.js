@@ -3,7 +3,8 @@ const CalibrationPage = {
   state: {
     calibrations: [],
     editingCalibration: null,
-    rows: []
+    rows: [],
+    jsonMode: false
   },
 
   async render() {
@@ -27,10 +28,16 @@ const CalibrationPage = {
       </div>
       
       <div id="calibration-form-section" class="card" style="display: none;">
-        <div class="card-header">
+        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
           <h2 class="card-title" id="form-title">New Calibration</h2>
+          <div style="display: flex; gap: var(--spacing-sm);">
+            <button type="button" id="toggle-form-mode-btn" class="btn btn-sm btn-secondary">
+              <i class="fas fa-code"></i> Switch to JSON
+            </button>
+          </div>
         </div>
         <div class="card-body">
+          <!-- Form Mode -->
           <form id="calibration-form">
             <div class="form-group">
               <label for="camera-id-input">Camera ID *</label>
@@ -74,6 +81,33 @@ const CalibrationPage = {
             
             <div id="form-errors" class="form-error" style="display: none;"></div>
           </form>
+          
+          <!-- JSON Mode -->
+          <div id="json-form" style="display: none;">
+            <div class="form-group">
+              <label for="json-input">Raw JSON Input</label>
+              <textarea id="json-input" class="form-control" rows="20" style="font-family: monospace; font-size: 12px;" placeholder='Paste calibration JSON here...'></textarea>
+              <small style="color: var(--text-secondary); display: block; margin-top: var(--spacing-xs);">
+                Paste complete calibration JSON. Example structure available below.
+              </small>
+            </div>
+            <details style="margin-top: var(--spacing-md);">
+              <summary style="cursor: pointer; color: var(--primary-color);">Show JSON Example</summary>
+              <pre style="background: var(--bg-tertiary); padding: var(--spacing-md); border-radius: 6px; overflow-x: auto; font-size: 11px; margin-top: var(--spacing-sm);">{
+  "camera_id": "upj-parking-camera-1",
+  "rows": [
+    {"row_index": 0, "y_coordinate": 6400, "label": "Row 0", "start_x": 400, "end_x": 6100},
+    {"row_index": 1, "y_coordinate": 5650, "label": "Row 1", "start_x": 600, "end_x": 5900},
+    {"row_index": 2, "y_coordinate": 5250, "label": "Row 2", "start_x": 650, "end_x": 5700}
+  ],
+  "min_space_width": 40.0,
+  "space_coefficient": 0.85,
+  "row_start_x": 40,
+  "row_end_x": 6100
+}</pre>
+            </details>
+            <div id="json-errors" class="form-error" style="display: none; margin-top: var(--spacing-md);"></div>
+          </div>
         </div>
         <div class="card-footer">
           <button id="save-calibration-btn" class="btn btn-primary">Save Calibration</button>
@@ -124,6 +158,68 @@ const CalibrationPage = {
     document.getElementById('close-detail-btn').addEventListener('click', () => {
       document.getElementById('detail-modal').style.display = 'none';
     });
+    
+    // Toggle form mode (Form <-> JSON)
+    document.getElementById('toggle-form-mode-btn').addEventListener('click', () => {
+      this.toggleFormMode();
+    });
+  },
+  
+  toggleFormMode() {
+    const formEl = document.getElementById('calibration-form');
+    const jsonEl = document.getElementById('json-form');
+    const toggleBtn = document.getElementById('toggle-form-mode-btn');
+    
+    if (formEl.style.display === 'none') {
+      // Switch to Form mode
+      formEl.style.display = 'block';
+      jsonEl.style.display = 'none';
+      toggleBtn.innerHTML = '<i class="fas fa-code"></i> Switch to JSON';
+      this.state.jsonMode = false;
+    } else {
+      // Switch to JSON mode
+      formEl.style.display = 'none';
+      jsonEl.style.display = 'block';
+      toggleBtn.innerHTML = '<i class="fas fa-list"></i> Switch to Form';
+      this.state.jsonMode = true;
+      
+      // Pre-fill JSON with current form data if available
+      if (this.state.rows.length > 0 || this.state.editingCalibration) {
+        this.fillJsonFromForm();
+      }
+    }
+  },
+  
+  fillJsonFromForm() {
+    try {
+      const rows = this.state.rows.map((row, index) => {
+        const yEl = document.getElementById(`row-y-${index}`);
+        const startXEl = document.getElementById(`row-start-x-${index}`);
+        const endXEl = document.getElementById(`row-end-x-${index}`);
+        const labelEl = document.getElementById(`row-label-${index}`);
+        
+        return {
+          row_index: index,
+          y_coordinate: yEl ? parseFloat(yEl.value) || 0 : 0,
+          label: labelEl ? labelEl.value : `Row ${index}`,
+          start_x: startXEl && startXEl.value ? parseInt(startXEl.value) : null,
+          end_x: endXEl && endXEl.value ? parseInt(endXEl.value) : null
+        };
+      });
+      
+      const data = {
+        camera_id: document.getElementById('camera-id-input').value.trim() || 'camera-1',
+        rows: rows,
+        min_space_width: parseFloat(document.getElementById('min-space-width-input').value) || 40,
+        space_coefficient: parseFloat(document.getElementById('space-coefficient-input').value) || 0.85,
+        row_start_x: parseInt(document.getElementById('row-start-x-input').value) || 0,
+        row_end_x: parseInt(document.getElementById('row-end-x-input').value) || 1920
+      };
+      
+      document.getElementById('json-input').value = JSON.stringify(data, null, 2);
+    } catch (e) {
+      console.error('Error filling JSON:', e);
+    }
   },
 
   async loadCalibrations() {
@@ -212,9 +308,15 @@ const CalibrationPage = {
   hideForm() {
     document.getElementById('calibration-form-section').style.display = 'none';
     document.getElementById('calibration-form').reset();
+    document.getElementById('calibration-form').style.display = 'block';
+    document.getElementById('json-form').style.display = 'none';
     document.getElementById('form-errors').style.display = 'none';
+    document.getElementById('json-errors').style.display = 'none';
+    document.getElementById('json-input').value = '';
+    document.getElementById('toggle-form-mode-btn').innerHTML = '<i class="fas fa-code"></i> Switch to JSON';
     this.state.editingCalibration = null;
     this.state.rows = [];
+    this.state.jsonMode = false;
   },
 
   addRow() {
@@ -240,13 +342,28 @@ const CalibrationPage = {
     const container = document.getElementById('rows-container');
     container.innerHTML = '';
     
+    // Header
+    const headerEl = document.createElement('div');
+    headerEl.style.cssText = 'display: grid; grid-template-columns: 60px 100px 100px 100px 1fr 40px; gap: var(--spacing-sm); margin-bottom: var(--spacing-xs); font-weight: bold; font-size: var(--font-size-sm);';
+    headerEl.innerHTML = `
+      <span>Index</span>
+      <span>Y Coord</span>
+      <span>Start X</span>
+      <span>End X</span>
+      <span>Label</span>
+      <span></span>
+    `;
+    container.appendChild(headerEl);
+    
     this.state.rows.forEach((row, index) => {
       const rowEl = document.createElement('div');
-      rowEl.style.cssText = 'display: grid; grid-template-columns: 80px 1fr 1fr 40px; gap: var(--spacing-sm); margin-bottom: var(--spacing-sm); align-items: center;';
+      rowEl.style.cssText = 'display: grid; grid-template-columns: 60px 100px 100px 100px 1fr 40px; gap: var(--spacing-sm); margin-bottom: var(--spacing-sm); align-items: center;';
       rowEl.innerHTML = `
         <input type="number" value="${row.row_index}" disabled class="form-control" style="background: var(--bg-tertiary);">
-        <input type="number" id="row-y-${index}" value="${row.y_coordinate}" placeholder="Y Coordinate" class="form-control" required>
-        <input type="text" id="row-label-${index}" value="${row.label}" placeholder="Label" class="form-control">
+        <input type="number" id="row-y-${index}" value="${row.y_coordinate || ''}" placeholder="Y" class="form-control" required>
+        <input type="number" id="row-start-x-${index}" value="${row.start_x || ''}" placeholder="Start X" class="form-control">
+        <input type="number" id="row-end-x-${index}" value="${row.end_x || ''}" placeholder="End X" class="form-control">
+        <input type="text" id="row-label-${index}" value="${row.label || ''}" placeholder="Label" class="form-control">
         <button type="button" class="btn btn-sm btn-danger" onclick="CalibrationPage.removeRow(${index})">×</button>
       `;
       container.appendChild(rowEl);
@@ -309,34 +426,76 @@ const CalibrationPage = {
   },
 
   async saveCalibration() {
-    // Validate form
-    const errors = this.validateForm();
-    const errorContainer = document.getElementById('form-errors');
+    let data;
     
-    if (errors.length > 0) {
-      errorContainer.innerHTML = errors.join('<br>');
-      errorContainer.style.display = 'block';
-      uiManager.showNotification('Please fix form errors', 'error');
-      return;
+    // Check if JSON mode
+    if (this.state.jsonMode) {
+      // Parse JSON input
+      const jsonInput = document.getElementById('json-input').value.trim();
+      const jsonErrorContainer = document.getElementById('json-errors');
+      
+      if (!jsonInput) {
+        jsonErrorContainer.innerHTML = 'JSON input is required';
+        jsonErrorContainer.style.display = 'block';
+        uiManager.showNotification('Please enter JSON data', 'error');
+        return;
+      }
+      
+      try {
+        data = JSON.parse(jsonInput);
+        jsonErrorContainer.style.display = 'none';
+        
+        // Basic validation
+        if (!data.camera_id) {
+          throw new Error('camera_id is required');
+        }
+        if (!data.rows || !Array.isArray(data.rows) || data.rows.length === 0) {
+          throw new Error('rows array is required and must not be empty');
+        }
+        
+      } catch (e) {
+        jsonErrorContainer.innerHTML = `Invalid JSON: ${e.message}`;
+        jsonErrorContainer.style.display = 'block';
+        uiManager.showNotification('Invalid JSON format', 'error');
+        return;
+      }
+    } else {
+      // Form mode - validate form
+      const errors = this.validateForm();
+      const errorContainer = document.getElementById('form-errors');
+      
+      if (errors.length > 0) {
+        errorContainer.innerHTML = errors.join('<br>');
+        errorContainer.style.display = 'block';
+        uiManager.showNotification('Please fix form errors', 'error');
+        return;
+      }
+      
+      errorContainer.style.display = 'none';
+      
+      // Collect form data
+      const rows = this.state.rows.map((row, index) => {
+        const startX = document.getElementById(`row-start-x-${index}`).value;
+        const endX = document.getElementById(`row-end-x-${index}`).value;
+        
+        return {
+          row_index: index,
+          y_coordinate: parseFloat(document.getElementById(`row-y-${index}`).value),
+          label: document.getElementById(`row-label-${index}`).value.trim(),
+          start_x: startX ? parseInt(startX) : null,
+          end_x: endX ? parseInt(endX) : null
+        };
+      });
+      
+      data = {
+        camera_id: document.getElementById('camera-id-input').value.trim(),
+        rows: rows,
+        min_space_width: parseFloat(document.getElementById('min-space-width-input').value),
+        space_coefficient: parseFloat(document.getElementById('space-coefficient-input').value),
+        row_start_x: parseInt(document.getElementById('row-start-x-input').value) || 0,
+        row_end_x: parseInt(document.getElementById('row-end-x-input').value) || 1920
+      };
     }
-    
-    errorContainer.style.display = 'none';
-    
-    // Collect form data
-    const rows = this.state.rows.map((row, index) => ({
-      row_index: index,
-      y_coordinate: parseFloat(document.getElementById(`row-y-${index}`).value),
-      label: document.getElementById(`row-label-${index}`).value.trim()
-    }));
-    
-    const data = {
-      camera_id: document.getElementById('camera-id-input').value.trim(),
-      rows: rows,
-      min_space_width: parseFloat(document.getElementById('min-space-width-input').value),
-      space_coefficient: parseFloat(document.getElementById('space-coefficient-input').value),
-      row_start_x: parseInt(document.getElementById('row-start-x-input').value) || 0,
-      row_end_x: parseInt(document.getElementById('row-end-x-input').value) || 1920
-    };
     
     try {
       uiManager.showLoading();
@@ -420,6 +579,8 @@ const CalibrationPage = {
               <tr>
                 <th>Index</th>
                 <th>Y Coordinate</th>
+                <th>Start X</th>
+                <th>End X</th>
                 <th>Label</th>
               </tr>
             </thead>
@@ -428,6 +589,8 @@ const CalibrationPage = {
                 <tr>
                   <td>${row.row_index}</td>
                   <td>${row.y_coordinate}</td>
+                  <td>${row.start_x || 'Global'}</td>
+                  <td>${row.end_x || 'Global'}</td>
                   <td>${row.label || 'N/A'}</td>
                 </tr>
               `).join('')}

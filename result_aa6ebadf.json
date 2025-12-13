@@ -1,0 +1,266 @@
+{
+  "session_id": "aa6ebadf-2d57-4aa3-a252-662f1846ec19",
+  "camera_id": "upj-parking-camera-1",
+  "status": "completed",
+  "total_frames": 1,
+  "max_detection_count": 266,
+  "total_motorcycles": 253,
+  "total_empty_spaces": 15,
+  "parking_occupancy_rate": 94.4,
+  "empty_spaces_per_row": {
+    "0": 3,
+    "1": 1,
+    "2": 4,
+    "3": 1,
+    "4": 0,
+    "5": 2,
+    "6": 1,
+    "7": 2,
+    "8": 0,
+    "9": 1
+  },
+  "posisi_kosong_per_baris": {
+    "row_0": [
+      {
+        "space_id": "row0_space9",
+        "x1": 2583,
+        "x2": 2750,
+        "y1": 6115,
+        "y2": 6684,
+        "width": 167.0,
+        "can_fit_motorcycle": true,
+        "motorcycle_capacity": 1
+      },
+      {
+        "space_id": "row0_space11",
+        "x1": 3156,
+        "x2": 3498,
+        "y1": 6115,
+        "y2": 6684,
+        "width": 342.0,
+        "can_fit_motorcycle": true,
+        "motorcycle_capacity": 3
+      },
+      {
+        "space_id": "row0_space13",
+        "x1": 3985,
+        "x2": 4863,
+        "y1": 6115,
+        "y2": 6684,
+        "width": 878.0,
+        "can_fit_motorcycle": true,
+        "motorcycle_capacity": 8
+      }
+    ],
+    "row_1": [
+      {
+        "space_id": "row1_space25",
+        "x1": 5590,
+        "x2": 5691,
+        "y1": 5411,
+        "y2": 5888,
+        "width": 101.0,
+        "can_fit_motorcycle": true,
+        "motorcycle_capacity": 1
+      }
+    ],
+    "row_2": [
+      {
+        "space_id": "row2_space6",
+        "x1": 2084,
+        "x2": 2260,
+        "y1": 5034,
+        "y2": 5465,
+        "width": 176.0,
+        "can_fit_motorcycle": true,
+        "motorcycle_capacity": 1
+      },
+      {
+        "space_id": "row2_space9",
+        "x1": 2847,
+        "x2": 2970,
+        "y1": 5034,
+        "y2": 5465,
+        "width": 123.0,
+        "can_fit_motorcycle": true,
+        "motorcycle_capacity": 1
+      },
+      {
+        "space_id": "row2_space13",
+        "x1": 3735,
+        "x2": 3862,
+        "y1": 5034,
+        "y2": 5465,
+        "width": 127.0,
+        "can_fit_motorcycle": true,
+        "motorcycle_capacity": 1
+      },
+      {
+        "space_id": "row2_space14",
+        "x1": 4051,
+        "x2": 4171,
+        "y1": 5034,
+        "y2": 5465,
+        "width": 120.0,
+        "can_fit_motorcycle": true,
+        "motorcycle_capacity": 1
+      }
+    ],
+    "row_3": [
+      {
+        "space_id": "row3_space1",
+        "x1": 1379,
+        "x2": 1516,
+        "y1": 4547,
+        "y2": 4940,
+        "width": 137.0,
+        "can_fit_motorcycle": true,
+        "motorcycle_capacity": 1
+      }
+    ],
+    "row_5": [
+      {
+        "space_id": "row5_space7",
+        "x1": 2427,
+        "x2": 2653,
+        "y1": 3940,
+        "y2": 4259,
+        "width": 226.0,
+        "can_fit_motorcycle": true,
+        "motorcycle_capacity": 2
+      },
+      {
+        "space_id": "row5_space12",
+        "x1": 3258,
+        "x2": 3476,
+        "y1": 3940,
+        "y2": 4259,
+        "width": 218.0,
+        "can_fit_motorcycle": true,
+        "motorcycle_capacity": 2
+      }
+    ],
+    "row_6": [
+      {
+        "space_id": "row6_space0",
+        "x1": 1516,
+        "x2": 1696,
+        "y1": 3738,
+        "y2": 4001,
+        "width": 180.0,
+        "can_fit_motorcycle": true,
+        "motorcycle_capacity": 2
+      }
+    ],
+    "row_7": [
+      {
+        "space_id": "row7_space12",
+        "x1": 3033,
+        "x2": 3112,
+        "y1": 3467,
+        "y2": 3732,
+        "width": 79.0,
+        "can_fit_motorcycle": true,
+        "motorcycle_capacity": 1
+      },
+      {
+        "space_id": "row7_space21",
+        "x1": 4133,
+        "x2": 4216,
+        "y1": 3467,
+        "y2": 3732,
+        "width": 83.0,
+        "can_fit_motorcycle": true,
+        "motorcycle_capacity": 1
+      }
+    ],
+    "row_9": [
+      {
+        "space_id": "row9_space8",
+        "x1": 2363,
+        "x2": 2443,
+        "y1": 3037,
+        "y2": 3278,
+        "width": 80.0,
+        "can_fit_motorcycle": true,
+        "motorcycle_capacity": 1
+      }
+    ]
+  },
+  "total_detections": 266,
+  "motor_per_baris": {
+    "9": 29,
+    "3": 23,
+    "2": 23,
+    "8": 30,
+    "7": 26,
+    "1": 27,
+    "5": 24,
+    "4": 27,
+    "0": 19,
+    "6": 25
+  },
+  "parking_analysis_available": true,
+  "kapasitas_kosong_per_baris": {
+    "0": 12,
+    "1": 1,
+    "2": 4,
+    "3": 1,
+    "5": 4,
+    "6": 2,
+    "7": 2,
+    "9": 1
+  },
+  "total_per_baris": {
+    "4": {
+      "motor_terdeteksi": 27,
+      "kapasitas_kosong": 0,
+      "total_slot": 27
+    },
+    "6": {
+      "motor_terdeteksi": 25,
+      "kapasitas_kosong": 2,
+      "total_slot": 27
+    },
+    "8": {
+      "motor_terdeteksi": 30,
+      "kapasitas_kosong": 0,
+      "total_slot": 30
+    },
+    "5": {
+      "motor_terdeteksi": 24,
+      "kapasitas_kosong": 4,
+      "total_slot": 28
+    },
+    "0": {
+      "motor_terdeteksi": 19,
+      "kapasitas_kosong": 12,
+      "total_slot": 31
+    },
+    "1": {
+      "motor_terdeteksi": 27,
+      "kapasitas_kosong": 1,
+      "total_slot": 28
+    },
+    "7": {
+      "motor_terdeteksi": 26,
+      "kapasitas_kosong": 2,
+      "total_slot": 28
+    },
+    "9": {
+      "motor_terdeteksi": 29,
+      "kapasitas_kosong": 1,
+      "total_slot": 30
+    },
+    "3": {
+      "motor_terdeteksi": 23,
+      "kapasitas_kosong": 1,
+      "total_slot": 24
+    },
+    "2": {
+      "motor_terdeteksi": 23,
+      "kapasitas_kosong": 4,
+      "total_slot": 27
+    }
+  }
+}
