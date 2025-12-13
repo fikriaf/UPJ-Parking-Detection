@@ -10,15 +10,31 @@ router = APIRouter()
 
 # IMPORTANT: Static routes MUST come before dynamic routes like /{session_id}
 
-@router.get("/latest")
+@router.get("/latest",
+    summary="Lihat History Deteksi",
+    description="""
+**🔓 Public Endpoint - Tidak perlu autentikasi**
+
+Ambil daftar session deteksi terbaru.
+
+### Contoh Response:
+```json
+{
+  "total": 5,
+  "results": [
+    {
+      "session_id": "abc-123-def",
+      "camera_id": "cam-1",
+      "max_detection_count": 45,
+      "status": "completed",
+      "created_at": "2024-01-15T10:30:00Z"
+    }
+  ]
+}
+```
+""")
 async def get_latest_results(limit: int = 10, skip: int = 0, status: str = None):
-    """Get latest detection results (Public - for users to view)
-    
-    Args:
-        limit: Number of results to returns
-        skip: Number of results to skip
-        status: Filter by status (active, completed, or None for all)
-    """
+    """Get latest detection results"""
     db = get_database()
     
     # Build query - if status provided, filter by it; otherwise get all
@@ -45,9 +61,34 @@ async def get_latest_results(limit: int = 10, skip: int = 0, status: str = None)
         ]
     }
 
-@router.get("/live")
+@router.get("/live",
+    summary="Lihat Deteksi Live",
+    description="""
+**🔓 Public Endpoint - Tidak perlu autentikasi**
+
+Ambil hasil deteksi terbaru yang sedang aktif.
+
+### Contoh Response:
+```json
+{
+  "session_id": "abc-123-def",
+  "camera_id": "cam-1",
+  "status": "active",
+  "max_detection_count": 45,
+  "total_motorcycles": 45,
+  "total_empty_spaces": 12,
+  "parking_occupancy_rate": 78.9,
+  "empty_spaces_per_row": {"0": 3, "1": 4, "2": 5},
+  "best_frame": {
+    "frame_id": "frame-uuid",
+    "detection_count": 45,
+    "detections": [...]
+  }
+}
+```
+""")
 async def get_live_result():
-    """Get current live detection (latest active session)"""
+    """Get current live detection"""
     db = get_database()
     session = await db.detection_sessions.find_one(
         {"status": "active"},

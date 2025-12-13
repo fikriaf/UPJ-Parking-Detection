@@ -17,12 +17,42 @@ def generate_code():
 
 # Public endpoints (no auth required)
 
-@router.post("/register", response_model=MotorcycleResponse)
+@router.post("/register", response_model=MotorcycleResponse, 
+    summary="Daftarkan Motor Baru",
+    description="""
+**🔓 Public Endpoint - Tidak perlu autentikasi**
+
+Daftarkan motor baru dan dapatkan kode unik 8 karakter.
+
+### Contoh Request:
+```json
+{
+  "owner_name": "John Doe",
+  "phone": "08123456789",
+  "brand": "Honda",
+  "model": "Vario 150",
+  "color": "Hitam"
+}
+```
+
+### Contoh Response:
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "code": "A1B2C3D4",
+  "owner_name": "John Doe",
+  "phone": "08123456789",
+  "brand": "Honda",
+  "model": "Vario 150",
+  "color": "Hitam",
+  "is_active": true,
+  "created_at": "2024-01-15T10:30:00Z",
+  "updated_at": "2024-01-15T10:30:00Z"
+}
+```
+""")
 async def register_motorcycle(data: MotorcycleRegister):
-    """
-    Register a new motorcycle (Public - for users)
-    Returns a unique code for identification
-    """
+    """Register a new motorcycle (Public)"""
     db = get_database()
     
     # Generate unique code
@@ -52,11 +82,37 @@ async def register_motorcycle(data: MotorcycleRegister):
     
     return MotorcycleResponse(**motorcycle_data)
 
-@router.get("/check/{code}")
+@router.get("/check/{code}",
+    summary="Cek Status Motor",
+    description="""
+**🔓 Public Endpoint - Tidak perlu autentikasi**
+
+Cek apakah motor dengan kode tertentu sudah terdaftar.
+
+### Contoh Response (Terdaftar):
+```json
+{
+  "registered": true,
+  "code": "A1B2C3D4",
+  "owner_name": "John Doe",
+  "brand": "Honda",
+  "model": "Vario 150",
+  "color": "Hitam",
+  "is_active": true
+}
+```
+
+### Contoh Response (Tidak Terdaftar):
+```json
+{
+  "registered": false,
+  "code": "XXXXXXXX",
+  "message": "Motor tidak terdaftar"
+}
+```
+""")
 async def check_motorcycle(code: str):
-    """
-    Check if a motorcycle is registered by code (Public)
-    """
+    """Check if motorcycle is registered"""
     db = get_database()
     motorcycle = await db.motorcycles.find_one({"code": code.upper()})
     
