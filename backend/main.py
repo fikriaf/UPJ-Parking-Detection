@@ -31,6 +31,10 @@ Endpoint yang bisa diakses oleh semua user tanpa API key:
 | `GET /api/motorcycles/check/{code}` | Cek status motor |
 | `GET /api/motorcycles/my/{code}` | Detail motor saya |
 | `PUT /api/motorcycles/my/{code}` | Update data motor |
+| `DELETE /api/motorcycles/my/{code}` | Hapus motor sendiri |
+| `GET /api/motorcycles/user/{user_id}` | List motor by user |
+| `POST /api/users/register` | Register user baru |
+| `GET /api/users/{username}` | Get info user |
 
 ## 🔐 Admin Endpoints (Perlu API Key)
 
