@@ -130,6 +130,48 @@ async def get_live_result():
     if "parking_occupancy_rate" in session:
         response["parking_occupancy_rate"] = session["parking_occupancy_rate"]
     
+    # Add detected motorcycles with coordinates (like empty_spaces)
+    if "parking_analysis" in session:
+        parking_analysis = session["parking_analysis"]
+        if "detections" in parking_analysis:
+            detected_motorcycles = []
+            motor_counter = {}
+            
+            for det in parking_analysis["detections"]:
+                row = det.get("assigned_row")
+                if row is not None:
+                    if row not in motor_counter:
+                        motor_counter[row] = 0
+                    motor_counter[row] += 1
+                    
+                    bbox = det.get("bbox", {})
+                    detected_motorcycles.append({
+                        "motor_id": f"row{row}_motor{motor_counter[row]}",
+                        "row_index": row,
+                        "x1": bbox.get("x1"),
+                        "x2": bbox.get("x2"),
+                        "y1": bbox.get("y1"),
+                        "y2": bbox.get("y2"),
+                        "width": (bbox.get("x2", 0) or 0) - (bbox.get("x1", 0) or 0),
+                        "height": (bbox.get("y2", 0) or 0) - (bbox.get("y1", 0) or 0),
+                        "confidence": det.get("confidence", 0),
+                        "row_y_coordinate": det.get("row_y_coordinate")
+                    })
+            
+            # Sort by row_index then x1
+            detected_motorcycles.sort(key=lambda m: (m.get("row_index", 0), m.get("x1", 0) or 0))
+            
+            # Re-number motor_id after sorting
+            motor_counter = {}
+            for motor in detected_motorcycles:
+                row = motor["row_index"]
+                if row not in motor_counter:
+                    motor_counter[row] = 0
+                motor_counter[row] += 1
+                motor["motor_id"] = f"row{row}_motor{motor_counter[row]}"
+            
+            response["detected_motorcycles"] = detected_motorcycles
+    
     return response
 
 # Dynamic routes MUST come after static routes
@@ -170,6 +212,48 @@ async def get_result(session_id: str):
     
     if "parking_occupancy_rate" in session:
         response["parking_occupancy_rate"] = session["parking_occupancy_rate"]
+    
+    # Add detected motorcycles with coordinates (like empty_spaces)
+    if "parking_analysis" in session:
+        parking_analysis = session["parking_analysis"]
+        if "detections" in parking_analysis:
+            detected_motorcycles = []
+            motor_counter = {}
+            
+            for det in parking_analysis["detections"]:
+                row = det.get("assigned_row")
+                if row is not None:
+                    if row not in motor_counter:
+                        motor_counter[row] = 0
+                    motor_counter[row] += 1
+                    
+                    bbox = det.get("bbox", {})
+                    detected_motorcycles.append({
+                        "motor_id": f"row{row}_motor{motor_counter[row]}",
+                        "row_index": row,
+                        "x1": bbox.get("x1"),
+                        "x2": bbox.get("x2"),
+                        "y1": bbox.get("y1"),
+                        "y2": bbox.get("y2"),
+                        "width": (bbox.get("x2", 0) or 0) - (bbox.get("x1", 0) or 0),
+                        "height": (bbox.get("y2", 0) or 0) - (bbox.get("y1", 0) or 0),
+                        "confidence": det.get("confidence", 0),
+                        "row_y_coordinate": det.get("row_y_coordinate")
+                    })
+            
+            # Sort by row_index then x1
+            detected_motorcycles.sort(key=lambda m: (m.get("row_index", 0), m.get("x1", 0) or 0))
+            
+            # Re-number motor_id after sorting
+            motor_counter = {}
+            for motor in detected_motorcycles:
+                row = motor["row_index"]
+                if row not in motor_counter:
+                    motor_counter[row] = 0
+                motor_counter[row] += 1
+                motor["motor_id"] = f"row{row}_motor{motor_counter[row]}"
+            
+            response["detected_motorcycles"] = detected_motorcycles
     
     return response
 
