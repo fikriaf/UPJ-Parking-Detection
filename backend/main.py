@@ -6,7 +6,8 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from datetime import datetime
 import os
 
-from app.api import frames, results, users, admin, calibration, motorcycles
+from app.api import frames, results, users, admin, calibration
+from app.api.motorcycles import router as motorcycles_router, admin_router as motorcycles_admin_router
 from app.core.config import settings
 from app.db.mongodb import connect_to_mongo, close_mongo_connection
 
@@ -289,4 +290,5 @@ app.include_router(frames.router, prefix="/api/frames", tags=["🔐 Admin - Fram
 app.include_router(users.router, prefix="/api/users", tags=["🔓 Public - Users"])
 app.include_router(admin.router, prefix="/api/admin", tags=["🔐 Admin - Management"])
 app.include_router(calibration.router, prefix="/api/admin/calibration", tags=["🔐 Admin - Calibration"])
-app.include_router(motorcycles.router, prefix="/api/motorcycles", tags=["🔓 Public - Motorcycles"])
+app.include_router(motorcycles_router, prefix="/api/motorcycles", tags=["🔓 Public - Motorcycles"])
+app.include_router(motorcycles_admin_router, prefix="/api/admin/motorcycles", tags=["🔐 Admin - Motorcycles"])
