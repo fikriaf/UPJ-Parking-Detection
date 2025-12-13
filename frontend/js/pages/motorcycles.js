@@ -155,9 +155,9 @@ const MotorcyclesPage = {
           <tr>
             <th>Code</th>
             <th>Owner</th>
-            <th>Phone</th>
             <th>Brand / Model</th>
             <th>Color</th>
+            <th>Size (LxW)</th>
             <th>Status</th>
             <th>Registered</th>
             <th>Actions</th>
@@ -172,15 +172,19 @@ const MotorcyclesPage = {
       const toggleIcon = m.is_active ? 'ban' : 'check';
       const toggleTitle = m.is_active ? 'Deactivate' : 'Activate';
 
+      const sizeText = m.length_cm && m.width_cm 
+        ? `${m.length_cm} x ${m.width_cm} cm` 
+        : (m.length_cm ? `${m.length_cm} cm` : (m.width_cm ? `${m.width_cm} cm` : '-'));
+
       html += `
         <tr>
           <td><code class="code-badge">${m.code}</code></td>
           <td><strong>${m.owner_name}</strong></td>
-          <td>${m.phone || '-'}</td>
           <td>${m.brand || '-'} ${m.model || ''}</td>
           <td>
             <span class="color-badge" style="background: ${this.getColorCode(m.color)}">${m.color || '-'}</span>
           </td>
+          <td>${sizeText}</td>
           <td><span class="badge ${statusClass}">${statusText}</span></td>
           <td>${this.formatDate(m.created_at)}</td>
           <td>

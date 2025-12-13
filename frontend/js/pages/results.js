@@ -477,57 +477,29 @@ const ResultsPage = {
           ` : ''}
         </div>
         
-        ${frame.empty_spaces && frame.empty_spaces.length > 0 ? `
+        ${(result.empty_spaces || frame.empty_spaces || []).length > 0 ? `
           <div style="margin-bottom: var(--spacing-lg);">
-            <h4 style="margin-bottom: var(--spacing-md);">Empty Spaces Details</h4>
-            <div class="table-container">
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th>Space ID</th>
-                    <th>Row</th>
-                    <th>Width</th>
-                    <th>Coordinates</th>
-                    <th>Can Fit</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${frame.empty_spaces.map(space => `
-                    <tr>
-                      <td>${space.space_id || '-'}</td>
-                      <td>Row ${space.row_index ?? '-'}</td>
-                      <td>${space.width ? space.width.toFixed(1) + 'px' : '-'}</td>
-                      <td>${space.x1 !== undefined ? `(${space.x1}, ${space.y1}) - (${space.x2}, ${space.y2})` : '-'}</td>
-                      <td>${space.can_fit_motorcycle ? '✓ Yes' : '✕ No'}</td>
-                    </tr>
-                  `).join('')}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        ` : ''}
-        
-        ${frame.detections && frame.detections.length > 0 ? `
-          <div>
-            <h4 style="margin-bottom: var(--spacing-md);">Detections (${frame.detections.length})</h4>
-            <div style="max-height: 300px; overflow-y: auto;">
+            <h4 style="margin-bottom: var(--spacing-md);"><i class="fas fa-parking"></i> Empty Spaces (${(result.empty_spaces || frame.empty_spaces || []).length})</h4>
+            <div style="max-height: 250px; overflow-y: auto;">
               <div class="table-container">
-                <table class="table">
+                <table class="table table-compact">
                   <thead>
                     <tr>
-                      <th>#</th>
-                      <th>Confidence</th>
+                      <th>Space ID</th>
+                      <th>Row</th>
                       <th>Coordinates</th>
-                      <th>Assigned Row</th>
+                      <th>Width</th>
+                      <th>Capacity</th>
                     </tr>
                   </thead>
                   <tbody>
-                    ${frame.detections.map((det, i) => `
+                    ${(result.empty_spaces || frame.empty_spaces || []).map(space => `
                       <tr>
-                        <td>${i + 1}</td>
-                        <td>${det.confidence ? (det.confidence * 100).toFixed(1) + '%' : '-'}</td>
-                        <td>${det.bbox ? `(${det.bbox.x1}, ${det.bbox.y1}) - (${det.bbox.x2}, ${det.bbox.y2})` : '-'}</td>
-                        <td>${det.assigned_row !== undefined ? `Row ${det.assigned_row}` : 'N/A'}</td>
+                        <td><code>${space.space_id || '-'}</code></td>
+                        <td>Row ${space.row_index ?? '-'}</td>
+                        <td>${space.x1 !== undefined ? `(${space.x1}, ${space.y1}) - (${space.x2}, ${space.y2})` : '-'}</td>
+                        <td>${space.width ? Math.round(space.width) + 'px' : '-'}</td>
+                        <td>${space.motorcycle_capacity || 1} motor</td>
                       </tr>
                     `).join('')}
                   </tbody>
@@ -536,6 +508,66 @@ const ResultsPage = {
             </div>
           </div>
         ` : ''}
+        
+        ${(result.detected_motorcycles || []).length > 0 ? `
+          <div style="margin-bottom: var(--spacing-lg);">
+            <h4 style="margin-bottom: var(--spacing-md);"><i class="fas fa-motorcycle"></i> Detected Motorcycles (${result.detected_motorcycles.length})</h4>
+            <div style="max-height: 300px; overflow-y: auto;">
+              <div class="table-container">
+                <table class="table table-compact">
+                  <thead>
+                    <tr>
+                      <th>Motor ID</th>
+                      <th>Row</th>
+                      <th>Coordinates</th>
+                      <th>Size (WxH)</th>
+                      <th>Confidence</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${result.detected_motorcycles.map(motor => `
+                      <tr>
+                        <td><code>${motor.motor_id || '-'}</code></td>
+                        <td>Row ${motor.row_index ?? '-'}</td>
+                        <td>${motor.x1 !== undefined ? `(${motor.x1}, ${motor.y1}) - (${motor.x2}, ${motor.y2})` : '-'}</td>
+                        <td>${motor.width ? Math.round(motor.width) : '-'} x ${motor.height ? Math.round(motor.height) : '-'}</td>
+                        <td>${motor.confidence ? (motor.confidence * 100).toFixed(1) + '%' : '-'}</td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        ` : (frame.detections && frame.detections.length > 0 ? `
+          <div>
+            <h4 style="margin-bottom: var(--spacing-md);"><i class="fas fa-motorcycle"></i> Detections (${frame.detections.length})</h4>
+            <div style="max-height: 300px; overflow-y: auto;">
+              <div class="table-container">
+                <table class="table table-compact">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Confidence</th>
+                      <th>Coordinates</th>
+                      <th>Row</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${frame.detections.map((det, i) => `
+                      <tr>
+                        <td>${i + 1}</td>
+                        <td>${det.confidence ? (det.confidence * 100).toFixed(1) + '%' : '-'}</td>
+                        <td>${det.bbox ? `(${det.bbox.x1}, ${det.bbox.y1}) - (${det.bbox.x2}, ${det.bbox.y2})` : '-'}</td>
+                        <td>${det.assigned_row !== undefined ? `Row ${det.assigned_row}` : '-'}</td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        ` : '')}
       `;
       
       document.getElementById('result-detail-modal').style.display = 'flex';
