@@ -11,6 +11,8 @@ class MotorcycleRegister(BaseModel):
     brand: Optional[str] = Field(None, max_length=50, description="Merk motor")
     model: Optional[str] = Field(None, max_length=50, description="Model motor")
     color: Optional[str] = Field(None, max_length=30, description="Warna motor")
+    length_cm: Optional[float] = Field(None, ge=50, le=300, description="Panjang motor dalam cm")
+    width_cm: Optional[float] = Field(None, ge=30, le=150, description="Lebar motor dalam cm")
 
 class MotorcycleResponse(BaseModel):
     """Response model for motorcycle"""
@@ -23,6 +25,8 @@ class MotorcycleResponse(BaseModel):
     brand: Optional[str] = None
     model: Optional[str] = None
     color: Optional[str] = None
+    length_cm: Optional[float] = None  # Panjang motor dalam cm
+    width_cm: Optional[float] = None  # Lebar motor dalam cm
     is_active: bool = True
     created_at: datetime
     updated_at: datetime
@@ -35,4 +39,6 @@ class MotorcycleUpdate(BaseModel):
     brand: Optional[str] = Field(None, max_length=50)
     model: Optional[str] = Field(None, max_length=50)
     color: Optional[str] = Field(None, max_length=30)
+    length_cm: Optional[float] = Field(None, ge=50, le=300)
+    width_cm: Optional[float] = Field(None, ge=30, le=150)
     is_active: Optional[bool] = None

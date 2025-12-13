@@ -95,6 +95,8 @@ async def register_motorcycle(data: MotorcycleRegister):
         "brand": data.brand,
         "model": data.model,
         "color": data.color,
+        "length_cm": data.length_cm,
+        "width_cm": data.width_cm,
         "is_active": True,
         "created_at": now,
         "updated_at": now
@@ -181,6 +183,10 @@ async def update_my_motorcycle(code: str, data: MotorcycleUpdate):
         update_data["model"] = data.model
     if data.color is not None:
         update_data["color"] = data.color
+    if data.length_cm is not None:
+        update_data["length_cm"] = data.length_cm
+    if data.width_cm is not None:
+        update_data["width_cm"] = data.width_cm
 
     await db.motorcycles.update_one(
         {"code": code.upper()},

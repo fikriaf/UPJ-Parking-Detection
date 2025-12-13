@@ -494,10 +494,10 @@ const ResultsPage = {
                 <tbody>
                   ${frame.empty_spaces.map(space => `
                     <tr>
-                      <td>${space.space_id}</td>
-                      <td>Row ${space.row_index}</td>
-                      <td>${space.width.toFixed(1)}px</td>
-                      <td>(${space.x1}, ${space.y1}) - (${space.x2}, ${space.y2})</td>
+                      <td>${space.space_id || '-'}</td>
+                      <td>Row ${space.row_index ?? '-'}</td>
+                      <td>${space.width ? space.width.toFixed(1) + 'px' : '-'}</td>
+                      <td>${space.x1 !== undefined ? `(${space.x1}, ${space.y1}) - (${space.x2}, ${space.y2})` : '-'}</td>
                       <td>${space.can_fit_motorcycle ? '✓ Yes' : '✕ No'}</td>
                     </tr>
                   `).join('')}
@@ -525,8 +525,8 @@ const ResultsPage = {
                     ${frame.detections.map((det, i) => `
                       <tr>
                         <td>${i + 1}</td>
-                        <td>${(det.confidence * 100).toFixed(1)}%</td>
-                        <td>(${det.bbox.x1}, ${det.bbox.y1}) - (${det.bbox.x2}, ${det.bbox.y2})</td>
+                        <td>${det.confidence ? (det.confidence * 100).toFixed(1) + '%' : '-'}</td>
+                        <td>${det.bbox ? `(${det.bbox.x1}, ${det.bbox.y1}) - (${det.bbox.x2}, ${det.bbox.y2})` : '-'}</td>
                         <td>${det.assigned_row !== undefined ? `Row ${det.assigned_row}` : 'N/A'}</td>
                       </tr>
                     `).join('')}
