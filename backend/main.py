@@ -62,21 +62,26 @@ X-API-Key: your-api-key-here
 // POST /api/motorcycles/register
 // Request:
 {
-  "owner_name": "John Doe",
-  "phone": "08123456789",
+  "user_id": "john_doe",
   "brand": "Honda",
   "model": "Vario 150",
-  "color": "Hitam"
+  "color": "Hitam",
+  "length_cm": 192,
+  "width_cm": 68
 }
+// Note: owner_name & email auto-fill dari user jika user_id diberikan
 
 // Response:
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
   "code": "A1B2C3D4",
+  "user_id": "john_doe",
   "owner_name": "John Doe",
   "brand": "Honda",
   "model": "Vario 150",
   "color": "Hitam",
+  "length_cm": 192,
+  "width_cm": 68,
   "is_active": true,
   "created_at": "2024-01-15T10:30:00Z"
 }
