@@ -150,12 +150,16 @@ TAGS_METADATA = [
         "description": "Endpoint publik untuk registrasi dan cek motor. **Tidak perlu autentikasi.**"
     },
     {
+        "name": "🔓 Public - Users",
+        "description": "Endpoint publik untuk registrasi user. **Tidak perlu autentikasi.**"
+    },
+    {
         "name": "🔐 Admin - Frames",
         "description": "Upload dan proses frame deteksi. **Perlu header X-API-Key.**"
     },
     {
         "name": "🔐 Admin - Management",
-        "description": "Manajemen session dan statistik. **Perlu header X-API-Key.**"
+        "description": "Manajemen session, users, dan statistik. **Perlu header X-API-Key.**"
     },
     {
         "name": "🔐 Admin - Calibration",
@@ -282,7 +286,7 @@ async def api_docs():
 # Include routers with categorized tags
 app.include_router(results.router, prefix="/api/results", tags=["🔓 Public - Results"])
 app.include_router(frames.router, prefix="/api/frames", tags=["🔐 Admin - Frames"])
-app.include_router(users.router, prefix="/api/users", tags=["🔐 Admin - Management"])
+app.include_router(users.router, prefix="/api/users", tags=["🔓 Public - Users"])
 app.include_router(admin.router, prefix="/api/admin", tags=["🔐 Admin - Management"])
 app.include_router(calibration.router, prefix="/api/admin/calibration", tags=["🔐 Admin - Calibration"])
 app.include_router(motorcycles.router, prefix="/api/motorcycles", tags=["🔓 Public - Motorcycles"])
