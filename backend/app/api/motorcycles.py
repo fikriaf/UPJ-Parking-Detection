@@ -160,6 +160,24 @@ async def get_motorcycles_by_user(user_id: str):
     return [MotorcycleResponse(**m) for m in motorcycles]
 
 
+@router.delete("/my/{code}",
+    summary="Hapus Motor Sendiri",
+    description="**🔓 Public Endpoint** - Hapus motor berdasarkan kode unik.")
+async def delete_my_motorcycle(code: str):
+    """Delete own motorcycle by code (Public)"""
+    db = get_database()
+    
+    result = await db.motorcycles.delete_one({"code": code.upper()})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Motorcycle not found")
+    
+    return {
+        "message": "Motor berhasil dihapus",
+        "code": code.upper()
+    }
+
+
 @router.put("/my/{code}", response_model=MotorcycleResponse)
 async def update_my_motorcycle(code: str, data: MotorcycleUpdate):
     """Update motorcycle details (Public - owner can update their own)"""
