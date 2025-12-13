@@ -183,6 +183,36 @@ class ApiClient {
     });
     return response.json();
   }
+
+  // Motorcycle management endpoints (Admin)
+  async getMotorcycles(params = {}) {
+    const queryParams = new URLSearchParams();
+    if (params.limit) queryParams.append('limit', params.limit);
+    if (params.skip) queryParams.append('skip', params.skip);
+    if (params.search) queryParams.append('search', params.search);
+    
+    const response = await this.request(`/api/admin/motorcycles?${queryParams.toString()}`);
+    return response.json();
+  }
+
+  async getMotorcycleStats() {
+    const response = await this.request('/api/admin/motorcycles/stats');
+    return response.json();
+  }
+
+  async toggleMotorcycleActive(code) {
+    const response = await this.request(`/api/admin/motorcycles/${code}/toggle-active`, {
+      method: 'PUT'
+    });
+    return response.json();
+  }
+
+  async deleteMotorcycle(code) {
+    const response = await this.request(`/api/admin/motorcycles/${code}`, {
+      method: 'DELETE'
+    });
+    return response.json();
+  }
 }
 
 // Create global instance

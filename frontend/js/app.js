@@ -44,6 +44,7 @@ class App {
     router.addRoute('/results', () => this.showPage(ResultsPage));
     router.addRoute('/sessions', () => this.showPage(SessionsPage));
     router.addRoute('/users', () => this.showPage(UsersPage));
+    router.addRoute('/motorcycles', () => this.showPage(MotorcyclesPage));
   }
 
   setupEventListeners() {

@@ -38,10 +38,45 @@ async def verify_admin_key(x_api_key: Optional[str] = Header(None)):
 **🔓 Public Endpoint - Tidak perlu autentikasi**
 
 Daftarkan motor baru dan dapatkan kode unik 8 karakter.
+
+Jika `user_id` diberikan, data `owner_name` dan `email` akan otomatis diambil dari profil user.
 """)
 async def register_motorcycle(data: MotorcycleRegister):
     """Register a new motorcycle (Public)"""
     db = get_database()
+
+    # Auto-fill from user if user_id provided
+    owner_name = data.owner_name
+    email = data.email
+    phone = data.phone
+    user_id = data.user_id
+
+    if user_id:
+        # Try to find user by username or _id
+        from bson import ObjectId
+        user = None
+        
+        # Try by username first
+        user = await db.users.find_one({"username": user_id})
+        
+        # If not found, try by ObjectId
+        if not user and ObjectId.is_valid(user_id):
+            user = await db.users.find_one({"_id": ObjectId(user_id)})
+        
+        if user:
+            # Auto-fill from user profile if not provided
+            if not owner_name:
+                owner_name = user.get("username")
+            if not email:
+                email = user.get("email")
+            # Store the actual user_id (as string)
+            user_id = str(user.get("_id")) if user.get("_id") else user.get("username")
+        else:
+            raise HTTPException(status_code=404, detail="User not found")
+    
+    # Validate owner_name is provided
+    if not owner_name:
+        raise HTTPException(status_code=400, detail="owner_name is required if user_id is not provided")
 
     code = generate_code()
     while await db.motorcycles.find_one({"code": code}):
@@ -53,9 +88,10 @@ async def register_motorcycle(data: MotorcycleRegister):
     motorcycle_data = {
         "id": motorcycle_id,
         "code": code,
-        "owner_name": data.owner_name,
-        "phone": data.phone,
-        "email": data.email,
+        "user_id": user_id,
+        "owner_name": owner_name,
+        "phone": phone,
+        "email": email,
         "brand": data.brand,
         "model": data.model,
         "color": data.color,
@@ -104,6 +140,22 @@ async def get_my_motorcycle(code: str):
         raise HTTPException(status_code=404, detail="Motorcycle not found")
 
     return MotorcycleResponse(**motorcycle)
+
+
+@router.get("/user/{user_id}", response_model=List[MotorcycleResponse],
+    summary="Get Motor by User",
+    description="**🔓 Public Endpoint** - Ambil semua motor yang terdaftar oleh user tertentu.")
+async def get_motorcycles_by_user(user_id: str):
+    """Get all motorcycles registered by a specific user"""
+    db = get_database()
+    
+    # Search by user_id field
+    motorcycles = await db.motorcycles.find({"user_id": user_id}).sort("created_at", -1).to_list(100)
+    
+    if not motorcycles:
+        return []
+    
+    return [MotorcycleResponse(**m) for m in motorcycles]
 
 
 @router.put("/my/{code}", response_model=MotorcycleResponse)
