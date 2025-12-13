@@ -112,6 +112,48 @@ def get_session_results(session_id):
         result["motor_per_baris"] = motor_per_row
         result["parking_analysis_available"] = bool(parking_analysis)
         
+        # Detail posisi motor per baris (seperti posisi_kosong_per_baris)
+        motor_positions_by_row = {}
+        motor_counter = {}  # Counter per row untuk generate motor_id
+        
+        if parking_analysis and "detections" in parking_analysis:
+            for det in parking_analysis.get("detections", []):
+                row = det.get("assigned_row")
+                if row is not None:
+                    row_key = f"row_{row}"
+                    
+                    if row_key not in motor_positions_by_row:
+                        motor_positions_by_row[row_key] = []
+                        motor_counter[row_key] = 0
+                    
+                    motor_counter[row_key] += 1
+                    bbox = det.get("bbox", {})
+                    
+                    motor_positions_by_row[row_key].append({
+                        "motor_id": f"row{row}_motor{motor_counter[row_key]}",
+                        "x1": bbox.get("x1"),
+                        "x2": bbox.get("x2"),
+                        "y1": bbox.get("y1"),
+                        "y2": bbox.get("y2"),
+                        "width": bbox.get("x2", 0) - bbox.get("x1", 0) if bbox.get("x2") and bbox.get("x1") else 0,
+                        "height": bbox.get("y2", 0) - bbox.get("y1", 0) if bbox.get("y2") and bbox.get("y1") else 0,
+                        "confidence": det.get("confidence", 0),
+                        "row_y_coordinate": det.get("row_y_coordinate")
+                    })
+        
+        # Sort motor dalam setiap row berdasarkan x1
+        for row_key in motor_positions_by_row:
+            motor_positions_by_row[row_key] = sorted(
+                motor_positions_by_row[row_key], 
+                key=lambda m: m.get("x1", 0) or 0
+            )
+            # Re-number motor_id setelah sorting
+            for i, motor in enumerate(motor_positions_by_row[row_key], 1):
+                row_num = row_key.replace("row_", "")
+                motor["motor_id"] = f"row{row_num}_motor{i}"
+        
+        result["posisi_motor_per_baris"] = motor_positions_by_row
+        
         # Hitung kapasitas kosong per baris (dari motorcycle_capacity)
         kapasitas_kosong_per_row = {}
         for space in empty_spaces:
@@ -287,6 +329,27 @@ def main():
             print(f"\n   TOTAL KAPASITAS KOSONG: {total_capacity} motor")
         else:
             print("   (Tidak ada detail posisi kosong)")
+        
+        # Detail posisi motor per baris
+        print("\n" + "="*60)
+        print("🏍️ DETAIL POSISI MOTOR PER BARIS")
+        print("="*60)
+        posisi_motor = result.get('posisi_motor_per_baris', {})
+        if posisi_motor:
+            total_motors = 0
+            for row_key in sorted(posisi_motor.keys()):
+                motors = posisi_motor[row_key]
+                total_motors += len(motors)
+                print(f"\n   {row_key.upper()} ({len(motors)} motor):")
+                for motor in motors[:5]:  # Show first 5 only
+                    conf = motor.get('confidence', 0)
+                    print(f"      - {motor['motor_id']}: X={motor['x1']:.0f}-{motor['x2']:.0f}, "
+                          f"W={motor['width']:.0f}px, Conf={conf*100:.1f}%")
+                if len(motors) > 5:
+                    print(f"      ... dan {len(motors) - 5} motor lainnya")
+            print(f"\n   TOTAL MOTOR TERDETEKSI: {total_motors}")
+        else:
+            print("   (Tidak ada detail posisi motor)")
         
         return 0
     
