@@ -190,7 +190,7 @@ async def verify_admin_key(x_api_key: Optional[str] = Header(None)):
         raise HTTPException(status_code=403, detail="Invalid or missing API key")
     return True
 
-@router.get("/", response_model=List[MotorcycleResponse])
+@router.get("/", response_model=List[MotorcycleResponse], tags=["Admin - Motorcycles"])
 async def list_motorcycles(
     x_api_key: str = Header(...),
     limit: int = Query(50, ge=1, le=100),
@@ -215,7 +215,7 @@ async def list_motorcycles(
     
     return [MotorcycleResponse(**m) for m in motorcycles]
 
-@router.get("/stats")
+@router.get("/stats", tags=["Admin - Motorcycles"])
 async def get_motorcycle_stats(x_api_key: str = Header(...)):
     """
     Get motorcycle registration statistics (Admin only)
@@ -243,7 +243,7 @@ async def get_motorcycle_stats(x_api_key: str = Header(...)):
         "top_brands": [{"brand": b["_id"], "count": b["count"]} for b in brands]
     }
 
-@router.put("/admin/{code}/toggle-active")
+@router.put("/admin/{code}/toggle-active", tags=["Admin - Motorcycles"])
 async def toggle_motorcycle_active(code: str, x_api_key: str = Header(...)):
     """
     Toggle motorcycle active status (Admin only)
@@ -268,7 +268,7 @@ async def toggle_motorcycle_active(code: str, x_api_key: str = Header(...)):
         "message": f"Motorcycle {'activated' if new_status else 'deactivated'}"
     }
 
-@router.delete("/admin/{code}")
+@router.delete("/admin/{code}", tags=["Admin - Motorcycles"])
 async def delete_motorcycle(code: str, x_api_key: str = Header(...)):
     """
     Delete a motorcycle registration (Admin only)
