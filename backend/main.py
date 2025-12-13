@@ -223,11 +223,61 @@ async def health_check():
 # Custom ReDoc endpoint
 @app.get("/api-docs", include_in_schema=False)
 async def api_docs():
-    return get_redoc_html(
-        openapi_url="/openapi.json",
-        title="ParkIt API Documentation",
-        redoc_favicon_url="https://fastapi.tiangolo.com/img/favicon.png"
-    )
+    from fastapi.responses import HTMLResponse
+    html = """
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ParkIt API Documentation</title>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:300,400,700|Roboto:300,400,700" rel="stylesheet">
+    <style>
+        body { margin: 0; padding: 0; }
+    </style>
+</head>
+<body>
+    <div id="redoc-container"></div>
+    <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
+    <script>
+        // Fetch OpenAPI spec with ngrok header
+        fetch('/openapi.json', {
+            headers: { 'ngrok-skip-browser-warning': 'true' }
+        })
+        .then(response => response.json())
+        .then(spec => {
+            Redoc.init(spec, {
+                expandResponses: '200,201',
+                hideDownloadButton: false,
+                theme: {
+                    colors: {
+                        primary: { main: '#1976d2' },
+                        success: { main: '#4caf50' },
+                        http: {
+                            get: '#61affe',
+                            post: '#49cc90',
+                            put: '#fca130',
+                            delete: '#f93e3e'
+                        }
+                    },
+                    typography: {
+                        fontSize: '15px',
+                        fontFamily: 'Roboto, sans-serif'
+                    },
+                    rightPanel: {
+                        backgroundColor: '#263238'
+                    }
+                }
+            }, document.getElementById('redoc-container'));
+        })
+        .catch(err => {
+            document.body.innerHTML = '<h1>Error loading API docs</h1><p>' + err.message + '</p>';
+        });
+    </script>
+</body>
+</html>
+"""
+    return HTMLResponse(html)
 
 # Include routers with categorized tags
 app.include_router(results.router, prefix="/api/results", tags=["🔓 Public - Results"])
