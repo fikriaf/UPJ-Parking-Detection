@@ -6,7 +6,7 @@
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Status](https://img.shields.io/badge/status-active-success.svg)
 
-Parkit is an intelligent parking detection system that uses YOLOv8 deep learning model to detect motorcycles and calculate available parking spaces in real-time. The system provides both admin dashboard for management and public client interface for viewing parking availability.
+Parkit is an intelligent parking detection system that uses YOLOv12 deep learning model to detect motorcycles and calculate available parking spaces in real-time. The system provides both admin dashboard for management and public client interface for viewing parking availability.
 
 ## Screenshots
 
